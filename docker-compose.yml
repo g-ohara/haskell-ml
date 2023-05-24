@@ -1,0 +1,9 @@
+version: '2'
+services:
+  app:
+    image: haskell:latest
+    container_name: haskell_compiler
+    volumes:
+      - ./:/workspace
+    working_dir: /workspace
+    tty: true
