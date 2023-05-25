@@ -169,8 +169,6 @@ void display(const Node* node, int depth = 0)
 
 int main(void)
 {
-    std::cout << "Hello, World!" << std::endl;
-    
     Data D;
     D.push_back(Point{Features{0,0},0});
     D.push_back(Point{Features{0,1},1});

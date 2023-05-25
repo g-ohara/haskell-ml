@@ -1,0 +1,164 @@
+\documentclass[dvipdfmx,10.5pt]{jsarticle}
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{listings,jvlisting}
+\usepackage{bm}
+
+\usepackage{calc}  
+\usepackage{enumitem}
+\lstset{
+  basicstyle={\ttfamily},
+  identifierstyle={\small},
+  commentstyle={\smallitshape},
+  keywordstyle={\small\bfseries},
+  ndkeywordstyle={\small},
+  stringstyle={\small\ttfamily},
+  frame={tb},
+  breaklines=true,
+  columns=[l]{fullflexible},
+  numbers=left,
+  xrightmargin=0zw,
+  xleftmargin=3zw,
+  numberstyle={\scriptsize},
+  stepnumber=1,
+  numbersep=1zw,
+  lineskip=-0.5ex
+}
+\renewcommand{\lstlistingname}{アルゴリズム}
+
+% \newcommand{\argmin}{\mathop{\rm argmin}\limits}
+
+% \renewcommand{\thepart}{\arabic{part}}
+% \renewcommand{\thesection}{\thepart.\arabic{section}}
+% \renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+\newcommand{\noise}{\mathrm{noise}}
+\newcommand{\depth}{D}
+\newcommand{\dist}{d}
+\newcommand{\NNR}{[0,\infty)}
+\newcommand{\mywidth}{\widthof{\bfseries データセットのサイズ }}
+\numberwithin{equation}{part}
+
+\begin{document}
+\section{主問題}
+
+\subsection{所与の条件}
+\begin{description}[leftmargin=!,labelwidth=\mywidth]
+  \item[特徴空間(距離空間)] $(\mathcal{F},\dist)
+  \quad\dist:\mathcal{F}\times\mathcal{F}\to\NNR)$%=\{0,1\}^M$
+  % \item[ラベル数] $K\in\mathbb{N}$
+  \item[ラベル空間] $\mathcal{L}$%=\{0,1\}$
+  \item[学習済み分類器] $f:\mathcal{F}\to \mathcal{L}$
+\end{description}
+\begin{description}[leftmargin=!,labelwidth=\mywidth]
+  \item[目的データ] $x^*\in\mathcal{F}$
+  \item[深さ制約] $\depth_\mathrm{max}\in\mathbb{N}$
+  \item[精度制約] $A_\mathrm{min}\in[0,1]$
+\end{description}
+\subsection{決定木}
+\begin{description}[leftmargin=!,labelwidth=\mywidth]
+  \item[仮説空間] $\mathcal{T}_\mathcal{F}$
+  --- 特徴空間$\mathcal{F}$において, 可能な決定木の集合
+\item[決定木] $t\in\mathcal{T}_\mathcal{F}$
+\item $t:\mathcal{F}\to \mathcal{L}$
+\item[木の深さ] $\depth(t):\mathcal{T}_\mathcal{F}\to \mathbb{N}$
+\end{description}
+
+\subsection{変数}
+\begin{description}[leftmargin=!,labelwidth=\mywidth]
+  \item[近傍半径] $r\in\NNR$ 
+\end{description}
+
+\subsection{関数など}
+\begin{description}[leftmargin=!,labelwidth=\mywidth]
+  \item[近傍] 
+  $
+    V_{x^*}(r):\NNR\to 2^\mathcal{F}\quad\quad
+    V_{x^*}(r)=\left\{x\in\mathcal{F}\mid\dist(x,x^*)\le r\right\}
+    % \forall r_1,r_2\in\NNR
+    % \ ;\ r_1<r_2\longrightarrow V_{x^*}(r_1)\subseteq V_{x^*}(r_2)
+  $
+\end{description}
+\begin{description}[leftmargin=!,labelwidth=\mywidth]
+  \item[ノイズ集合] 
+  $
+    \noise(V):2^\mathcal{F}\to2^\mathcal{F}\quad\quad
+    \forall V\in2^\mathcal{F}\ ;\ \noise(V)\subseteq
+    V\wedge\noise(V)\text{ is finite.}
+  $
+\end{description}
+\begin{description}[leftmargin=!,labelwidth=\mywidth]
+  \item[近似精度]
+  $A_{f,x^*}(t,r):\mathcal{T}_\mathcal{F}\times\NNR\to[0,1]$
+  $$
+    A_{f,x^*}(t,r)=\frac{1}{|\noise(V_{x^*}(r))|}
+    \sum_{x\in\noise(V_{x^*}(r))}\mathbb{I}(t(x)=f(x))
+  $$
+\end{description}
+
+\subsection{問題}
+$
+  \exists t\in \mathcal{T}_\mathcal{F}\ ;
+  \ \depth(t)\le \depth_\mathrm{max}\wedge
+  A_{f,x^*}(t,r)\ge A_\mathrm{min}
+$
+を満足する最大の近傍半径$r\in\NNR$を求める. 
+
+\newpage
+\section{固定されたデータセットの場合}
+
+\subsection{所与の条件}
+\begin{description}[leftmargin=!,labelwidth=\mywidth]
+  %\item[特徴量の数] $M\in\mathbb{N}$
+  \item[特徴空間(距離空間)] $(\mathcal{F},\dist)
+  \quad\dist:\mathcal{F}\times\mathcal{F}\to\NNR$%=\{0,1\}^M$
+  % \item[ラベル数] $K\in\mathbb{N}$
+  \item[ラベル空間] $\mathcal{L}$%$=\{0,1\}$
+  \item[\underline{データセットのサイズ}] $N\in\mathbb{N}$
+  \item[\underline{データセット}] $X=\left\{x_i\in\mathcal{F}\right\}_{i=1}^N$
+  \item[学習済み分類器] $f:\mathcal{F}\to \mathcal{L}$
+\end{description}
+\begin{description}[leftmargin=!,labelwidth=\mywidth]
+  \item[目的データ] $x^*\in X$
+  \item[深さ制約] $\depth_\mathrm{max}\in\mathbb{N}$
+  \item[精度制約] $A_\mathrm{min}\in[0,1]$
+\end{description}
+\subsection{決定木}
+\begin{description}[leftmargin=!,labelwidth=\mywidth]
+  \item[仮説空間] $\mathcal{T}_\mathcal{F}$
+  --- 特徴空間$\mathcal{F}$において, 可能な決定木の集合
+\item[決定木] $t\in\mathcal{T}_\mathcal{F}$
+\item $t:\mathcal{F}\to \mathcal{L}$
+\item[木の深さ] $\depth(t):\mathcal{T}_\mathcal{F}\to \mathbb{N}$
+\end{description}
+
+\subsection{変数}
+\begin{description}[leftmargin=!,labelwidth=\mywidth]
+  \item[近傍半径] $r\in\NNR$ 
+\end{description}
+
+\subsection{関数など}
+\begin{description}[leftmargin=!,labelwidth=\mywidth]
+  \item[\underline{ノイズ集合}] 
+  $
+    \noise_{x^*}(r):\NNR\to2^\mathcal{F}\quad\quad
+    \noise_{x^*}(r)=\left\{x\in X\mid\dist(x-x^*)\le r\right\}\subseteq X
+  $
+\end{description}
+\begin{description}[leftmargin=!,labelwidth=\mywidth]
+  \item[\underline{近似精度}]
+  $A_{f,x^*}(t,r):\mathcal{T}_\mathcal{F}\times\NNR\to[0,1]$
+  $$
+    A_{f,x^*}(t,r)=\frac{1}{|\noise_{x^*}(r)|}
+    \sum_{x\in\noise_{x^*}(r)}\mathbb{I}(t(x)=f(x))
+  $$
+\end{description}
+
+\subsection{問題}
+$
+  \exists t\in \mathcal{T}_\mathcal{F}\ ;
+  \ \depth(t)\le \depth_\mathrm{max}\wedge
+  A_{f,x^*}(t,r)\ge A_\mathrm{min}
+$
+を満足する最大の近傍半径$r\in\NNR$を求める. 
+
+\end{document}
