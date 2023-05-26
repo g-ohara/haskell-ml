@@ -4,7 +4,7 @@
 \usepackage{listings,jvlisting}
 \usepackage{bm}
 
-\usepackage{calc}  
+\usepackage{calc}
 \usepackage{enumitem}
 \lstset{
   basicstyle={\ttfamily},
@@ -38,6 +38,7 @@
 \newcommand{\mywidth}{\widthof{\bfseries データセットのサイズ }}
 \newcommand{\myHspace}{\mathcal{T}_\mathcal{F}}
 \newcommand{\Dmax}{\depth_\mathrm{max}}
+\newcommand{\fdim}{M}
 \numberwithin{equation}{part}
 
 \begin{document}
@@ -45,8 +46,15 @@
 
 \subsection{所与の条件}
 \begin{description}[leftmargin=!,labelwidth=\mywidth]
-  \item[特徴空間(距離空間)] $(\mathcal{F},\dist)
-  \quad\dist:\mathcal{F}\times\mathcal{F}\to\NNR$%=\{0,1\}^M$
+  \item[特徴空間の次元] $\fdim\in\mathbb{N}$
+  \item[特徴空間(距離空間)]
+  $
+    (\mathcal{F},\dist)
+    \quad\mathcal{F}=\mathcal{F}_1\times\mathcal{F}_2\times
+    \dots\times\mathcal{F}_\fdim,
+    \quad\dist:\mathcal{F}\times\mathcal{F}\to\NNR
+  $
+
   % \item[ラベル数] $K\in\mathbb{N}$
   \item[ラベル空間] $\mathcal{L}$%=\{0,1\}$
   \item[学習済み分類器] $f:\mathcal{F}\to \mathcal{L}$
@@ -66,19 +74,19 @@
 
 \subsection{変数}
 \begin{description}[leftmargin=!,labelwidth=\mywidth]
-  \item[近傍半径] $r\in\NNR$ 
+  \item[近傍半径] $r\in\NNR$
 \end{description}
 
 \subsection{関数など}
 \begin{description}[leftmargin=!,labelwidth=\mywidth]
-  \item[近傍] 
+  \item[近傍]
   $V_{x^*}(r)=\left\{x\in\mathcal{F}\mid\dist(x,x^*)\le r\right\}$
 \end{description}
 \begin{description}[leftmargin=!,labelwidth=\mywidth]
-  \item[ノイズ集合] 
+  \item[ノイズ集合]
   $
     \noise(r):\NNR\to2^{F}\quad
-    \forall V\in2^\mathcal{F}\ ;\ \noise(r)\subseteq
+    \forall r\in\NNR\ ;\ \noise(r)\subseteq
     V_{x^*}(r)\wedge\noise(r)\text{ is finite.}
   $
 \end{description}
@@ -91,15 +99,19 @@
 
 \subsection{問題}
 $\exists t\in \myHspace(\Dmax)\ ;\ A(t,r)\ge A_\mathrm{min}$
-を満足する最大の近傍半径$r\in\NNR$を求める. 
+を満足する最大の近傍半径$r\in\NNR$を求める.
 
 \newpage
 \section{固定されたデータセットの場合}
 
 \subsection{所与の条件}
 \begin{description}[leftmargin=!,labelwidth=\mywidth]
-  %\item[特徴量の数] $M\in\mathbb{N}$
-  \item[特徴空間] $\mathcal{F}$%=\{0,1\}^M$
+  \item[特徴空間の次元] $\fdim\in\mathbb{N}$
+  \item[特徴空間]
+  $
+    \mathcal{F}=\mathcal{F}_1\times\mathcal{F}_2\times
+    \dots\times\mathcal{F}_\fdim
+  $
   % \item[ラベル数] $K\in\mathbb{N}$
   \item[ラベル空間] $\mathcal{L}$%$=\{0,1\}$
   \item[\underline{データセットのサイズ}] $N\in\mathbb{N}$
@@ -163,12 +175,12 @@ $A_{X,Y}(t)\ge A_\mathrm{min}$
 
 % \subsection{変数}
 % \begin{description}[leftmargin=!,labelwidth=\mywidth]
-%   \item[近傍半径] $r\in\NNR$ 
+%   \item[近傍半径] $r\in\NNR$
 % \end{description}
 
 % \subsection{関数など}
 % \begin{description}[leftmargin=!,labelwidth=\mywidth]
-%   \item[\underline{ノイズ集合}] 
+%   \item[\underline{ノイズ集合}]
 %   $
 %     \noise_{x^*}(r):\NNR\to2^\mathcal{F}\quad\quad
 %     \noise_{x^*}(r)=\left\{x\in X\mid\dist(x-x^*)\le r\right\}\subseteq X
@@ -189,6 +201,6 @@ $A_{X,Y}(t)\ge A_\mathrm{min}$
 %   \ \depth(t)\le \depth_\mathrm{max}\wedge
 %   A_{f,x^*}(t,r)\ge A_\mathrm{min}
 % $
-% を満足する最大の近傍半径$r\in\NNR$を求める. 
+% を満足する最大の近傍半径$r\in\NNR$を求める.
 
 \end{document}
