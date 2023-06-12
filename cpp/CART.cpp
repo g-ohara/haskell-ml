@@ -1,4 +1,7 @@
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
 #include <array>
 #include <vector>
 
@@ -163,6 +166,24 @@ void display(const Node* node, int depth = 0)
             const Node* trg = node->child[i];
             if (trg != nullptr)
                 display(trg, depth + 1);
+        }
+    }
+}
+
+void read_csv(Data& data_set)
+{
+    std::string str_buf;
+    std::string str_conma_buf;
+    std::string input_csv_file_path  = "../data/iris/iris.data";
+
+    std::ifstream ifs(input_csv_file_path);
+
+    while (std::getline(ifs, str_buf))
+    {        
+        std::istringstream i_stream(str_buf);
+        while (getline(i_stream, str_conma_buf, ','))
+        {
+            
         }
     }
 }
