@@ -1,39 +1,8 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <array>
-#include <vector>
-
-const int F = 2;
-
-typedef std::array<bool, F> Features;
-typedef bool Label;
-struct Point
-{
-    Features feature;
-    Label label;
-};
-typedef std::vector<Point> Data;
-
-struct Node;
-
-typedef std::array<Node*, 2> Children;
-
-struct Node
-{
-    Children child = {nullptr};
-    Label _label;
-    int literal = 0;
-
-    Node(void);
-    Node(Label label);
-    ~Node(void);
-};
+#include "Header.hpp"
 
 Node::Node(void)
 {
-    for (Node* trg: child)
+    for (Node *trg : child)
         trg = nullptr;
     _label = 0;
 }
@@ -45,21 +14,22 @@ Node::Node(Label label) : Node{}
 
 Node::~Node(void)
 {
-    for (Node* trg: child)
-        if (trg != nullptr) delete trg;
+    for (Node *trg : child)
+        if (trg != nullptr)
+            delete trg;
 }
 
 bool homogeneous(Data D)
 {
     int true_point_num = 0;
-    for (const Point& trg: D)
-        if(trg.label)
+    for (const Point &trg : D)
+        if (trg.label)
             ++true_point_num;
-    
+
     return (true_point_num == 0 || true_point_num == (int)D.size());
 }
 
-Node* label(Data D)
+Node *label(Data D)
 {
     return new Node{D.at(0).label};
 }
@@ -67,10 +37,10 @@ Node* label(Data D)
 double Imp(Data D)
 {
     int true_point_num = 0;
-    for (const Point& trg: D)
-        if(trg.label)
+    for (const Point &trg : D)
+        if (trg.label)
             ++true_point_num;
-    
+
     double p = (double)true_point_num / (double)D.size();
     return 2.0 * p * (1.0 - p);
 }
@@ -81,45 +51,51 @@ double Imp(Data D_[2])
     int D_size = D_[0].size() + D_[1].size();
     for (int i = 0; i <= 1; ++i)
         gini += (double)D_[i].size() * Imp(D_[i]) / (double)D_size;
-    
+
     return gini;
 }
 
-void split_data(Data D_[2], const Data& D, int f)
+void split_data(Data D_[2], const Data &D, Literal S)
 {
-    for (const Point& trg: D)
-        D_[trg.feature.at(f)].push_back(trg);
+    for (const Point &trg : D)
+        D_[(trg.feature.at(S.feature) < S.value ? 0 : 1)].push_back(trg);
 }
 
-int best_split(Data D, int F)
+Literal best_split(Data D, int F)
 {
     int f_best = 0;
+    double val_best = 0;
     double I_min = 1.0;
     for (int f = 0; f < F; ++f)
     {
-        Data D_[2];
-        split_data(D_, D, f);
-        double imp = Imp(D_);
-        if (imp < I_min)
+        for (const Point &point : D)
         {
-            I_min = imp;
-            f_best = f;
+            Data D_[2];
+            split_data(D_, D, {f, point.feature.at(f)});
+            double imp = Imp(D_);
+            if (imp < I_min)
+            {
+                I_min = imp;
+                f_best = f;
+                val_best = point.feature.at(f);
+            }
         }
     }
-    return f_best;
+    return {f_best, val_best};
 }
 
-Node* grow_tree(Data D, int F)
+Node *grow_tree(Data D, int F)
 {
     // 1
-    if (homogeneous(D)) return label(D);
+    if (homogeneous(D))
+        return label(D);
 
-    Node* tree = new Node;
+    Node *tree = new Node;
 
     // 2
-    int S = best_split(D, F);
+    Literal S = best_split(D, F);
     tree->literal = S;
-    
+
     // 3. Sに含まれるリテラルに従ってDを部分集合D_iに分割する;
     Data D_[2];
     split_data(D_, D, S);
@@ -144,13 +120,12 @@ void display_shape(int depth)
     std::cout << " ";
 }
 
-void display(const Node* node, int depth = 0)
+void display(const Node *node, int depth = 0)
 {
     bool leaf = true;
-    for (const Node* trg : node->child)
+    for (const Node *trg : node->child)
         if (trg != nullptr)
             leaf = false;
-
 
     if (leaf)
     {
@@ -162,40 +137,40 @@ void display(const Node* node, int depth = 0)
         for (int i = 0; i < 2; ++i)
         {
             display_shape(depth);
-            std::cout << "Feature[" << node->literal << "] == " << i << std::endl;
-            const Node* trg = node->child[i];
+            std::cout << "Feature[" << node->literal.feature << "]"
+                      << (i == 0 ? " < " : " >= ")
+                      << node->literal.value << std::endl;
+            const Node *trg = node->child[i];
             if (trg != nullptr)
                 display(trg, depth + 1);
         }
     }
 }
 
-void read_csv(Data& data_set)
+void output_data(const Data &data)
 {
-    std::string str_buf;
-    std::string str_conma_buf;
-    std::string input_csv_file_path  = "../data/iris/iris.data";
-
-    std::ifstream ifs(input_csv_file_path);
-
-    while (std::getline(ifs, str_buf))
-    {        
-        std::istringstream i_stream(str_buf);
-        while (getline(i_stream, str_conma_buf, ','))
-        {
-            
-        }
+    for (const Point &point : data)
+    {
+        for (double feat : point.feature)
+            std::cout << std::setprecision(1) << feat << " ";
+        std::cout << "| " << point.label << std::endl;
     }
 }
 
 int main(void)
 {
+    /*
+    // XOR data set
     Data D;
-    D.push_back(Point{Features{0,0},0});
-    D.push_back(Point{Features{0,1},1});
-    D.push_back(Point{Features{1,0},1});
-    D.push_back(Point{Features{1,1},0});
-
+    D.push_back(Point{Features{0, 0}, 0});
+    D.push_back(Point{Features{0, 1}, 1});
+    D.push_back(Point{Features{1, 0}, 1});
+    D.push_back(Point{Features{1, 1}, 0});
+    */
+    std::cout << std::fixed;
+    Data D;
+    get_data(D, "../data/iris/iris.data");
+    output_data(D);
     display(grow_tree(D, F));
     return 0;
 }
