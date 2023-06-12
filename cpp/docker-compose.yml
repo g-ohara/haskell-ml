@@ -1,7 +1,7 @@
 services:
   app:
-    image: genjiohara/haskell-stack
-    container_name: DT-stack
+    image: genjiohara/make
+    container_name: DT-make
     volumes:
       - ./:/workspace
     working_dir: /workspace
