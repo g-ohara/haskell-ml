@@ -5,9 +5,11 @@ labelNum :: Int
 featureNum = 4
 labelNum = 3
 
+type Label = Int
+
 data DataPoint = DataPoint {
     dFeature :: [Double],
-    dLabel   :: Int
+    dLabel   :: Label
 } deriving Show
 
 strLabelToIntLabel :: String -> Int

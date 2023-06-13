@@ -1,1 +1,1 @@
-docker exec DT-stack bash -c "stack ghc -- CART.hs -o haskell-CART && ./haskell-CART"
+docker exec DT-stack bash -c "stack ghc -- CART.lhs -o haskell-CART && ./haskell-CART"

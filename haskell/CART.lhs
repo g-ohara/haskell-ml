@@ -92,36 +92,45 @@ data Tree = Leaf {label :: Int} |
 
 \section{Gini Impurity}
 \begin{align*}
-    \mathrm{Gini}(D)&=1-\sum_{l=0}^{L-1}p_l(D)^2 \\
-    p_l(D)&=\frac{1}{|D|}\sum_{(x,y)\in D}\mathbb{I}[y=l]
+    \mathrm{Gini}&:\lspace^n\to\mathbb{R} \\
+    \mathrm{Gini}(L)&=1-\sum_{i=0}^{L-1}p_i(L)^2 \\
+    p_i(L)&=\frac{1}{|L|}\sum_{l\in L}\mathbb{I}[l=i]
 \end{align*}
 \begin{code}
-gini :: DataSet -> Double
-gini points = 1.0 - (sum $ map (^ 2) pList)
-    where
-        pList       = map (/ dataSize) cntList
-        dataSize    = fromIntegral $ length points
-        cntList     = map fromIntegral
-            [length $ filter (\x -> (Prelude.==) (dLabel x) 0) points,
-            length $ filter (\x -> (Prelude.==) (dLabel x) 1) points,
-            length $ filter (\x -> (Prelude.==) (dLabel x) 2) points]
+gini :: [Label] -> Double
+gini labels = 1.0 - (sum $ map (^ 2) $ pList labels)
+
+pList :: [Label] -> [Double]
+pList labels = map (/ labelSetSize) $ map fromIntegral $ cntList labels 0
+    where labelSetSize = fromIntegral $ length labels
+
+cntList :: [Label] -> Int -> [Int]
+cntList labels trg = 
+    if trg == labelNum
+        then []
+        else [length $ filter (== trg) labels] ++ (cntList labels $ trg + 1)
 \end{code}
 
 \newpage
 \section{Split Data}
+\begin{align*}
+    D_l(i,v)&=\left\{(\bm{x},y)\in D\mid x_i<v\right\} \\
+    D_r(i,v)&=\left\{(\bm{x},y)\in D\mid x_i\ge v\right\}
+\end{align*}
+
 \begin{code}
 splitData :: DataSet -> Literal -> [DataSet]
 splitData dataSet literal = [lData, rData]
     where
-        lCondition = \x -> ((dFeature x) !! lFeatureIdx literal) <   (lValue literal)
-        rCondition = \x -> ((dFeature x) !! lFeatureIdx literal) >=  (lValue literal)
-        lData = filter lCondition dataSet
-        rData = filter rCondition dataSet
+        lData = [(DataPoint x y) | (DataPoint x y) <- dataSet, x !! i <  v]
+        rData = [(DataPoint x y) | (DataPoint x y) <- dataSet, x !! i >= v]
+        i = lFeatureIdx literal
+        v = lValue literal
 
 scoreLiteral :: DataSet -> Literal -> Split
 scoreLiteral dataSet literal = Split literal score
     where
-        score = sum $ map (\x -> (gini x) * (fromIntegral $ length x) / dataSize) splittedData
+        score = sum $ map (\x -> (gini $ map dLabel x) * (fromIntegral $ length x) / dataSize) splittedData
         dataSize = fromIntegral $ length dataSet
         splittedData = splitData dataSet literal
 
