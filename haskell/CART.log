@@ -1,4 +1,4 @@
-This is e-pTeX, Version 3.141592653-p4.1.0-230214-2.6 (utf8.euc) (TeX Live 2023) (preloaded format=platex 2023.6.9)  13 JUN 2023 08:50
+This is e-pTeX, Version 3.141592653-p4.1.0-230214-2.6 (utf8.euc) (TeX Live 2023) (preloaded format=platex 2023.6.9)  13 JUN 2023 09:07
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -226,12 +226,12 @@ File: ts1cmtt.fd 2022/07/10 v2.5l Standard LaTeX font definitions
 ) [2] [3] [4]
 (./CART.aux) ) 
 Here is how much of TeX's memory you used:
- 4464 strings out of 478134
- 62956 string characters out of 5841016
- 2101584 words of memory out of 5000000
- 24808 multiletter control sequences out of 15000+600000
+ 4470 strings out of 478134
+ 63034 string characters out of 5841016
+ 2130584 words of memory out of 5000000
+ 24814 multiletter control sequences out of 15000+600000
  531288 words of font info for 104 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 54i,11n,62p,405b,1620s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 54i,11n,62p,405b,1759s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on CART.dvi (4 pages, 19104 bytes).
+Output written on CART.dvi (4 pages, 19596 bytes).

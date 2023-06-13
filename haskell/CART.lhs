@@ -46,8 +46,6 @@
 
 \section{Preamble}
 \begin{code}
-import Numeric.LinearAlgebra
-import Prelude hiding ((<>))
 import Text.ParserCombinators.Parsec
 import Data.CSV
 import Data.List
@@ -148,23 +146,70 @@ weightedGini wholeSize labelSet = (gini labelSet) * dblDataSize / dblWholeSize
 
 \begin{code}
 bestSplitAtFeature :: DataSet -> Int -> Split
-bestSplitAtFeature dataSet i = foldr min (Split (Literal 0 0) 1) splitList
+bestSplitAtFeature dataSet i = myMin splitList
     where
         splitList   = [scoreLiteral dataSet l | l <- literalList]
         literalList = [Literal i (x !! i) | (DataPoint x y) <- dataSet]
 
 bestSplit :: DataSet -> Split
-bestSplit dataSet = foldr min (Split (Literal 0 0) 1) splitList
+bestSplit dataSet = myMin splitList
     where splitList = [bestSplitAtFeature dataSet f | f <- [0,1..featureNum-1]]
 \end{code}
 
+\begin{code}
+growTree :: DataSet -> Int -> Int -> Tree
+growTree dataSet depth maxDepth =
+    if depth == maxDepth
+        then Leaf $ majorLabel [y | (DataPoint x y) <- dataSet]
+        else Node literal leftTree rightTree
+    where
+        literal         = sLiteral $ bestSplit dataSet
+        leftTree        = growTree lData (depth + 1) maxDepth
+        rightTree       = growTree rData (depth + 1) maxDepth
+        [lData, rData]  = splitData dataSet literal
+
+majorLabel :: [Label] -> Label
+majorLabel labels = maxIndex $ cntList labels 0
+\end{code}
+
+
 \section{Main}
 \begin{code}
+branchToString :: Int -> String
+branchToString depth = "|" ++ (concat $ replicate depth "   |") ++ "--- "
+
+treeToString :: Tree -> Int -> String
+treeToString (Leaf label) depth = 
+    branchToString depth ++ "class: " ++ (show label) ++ "\n"
+treeToString (Node (Literal i v) leftTree rightTree) depth =
+    let
+        str1 = branchToString depth ++ "Feature[" ++ (show i) ++ "] "
+        str2 = "< " ++ (show v) ++ "\n"
+        str3 = treeToString leftTree $ depth + 1
+        str4 = ">= " ++ (show v) ++ "\n"
+        str5 = treeToString rightTree $ depth + 1
+    in str1 ++ str2 ++ str3 ++ str1 ++ str4 ++ str5
+    
+
+
 main = do
     rawDataSet <- parseFromFile csvFile "../data/iris/iris.data"
     let dataSet = either (\x -> []) processData rawDataSet
     print $ bestSplit dataSet
     print $ scoreLiteral dataSet $ Literal 2 2.45
+    putStrLn $ treeToString (growTree dataSet 0 4) 0
+
+
+
+myMin :: [Split] -> Split
+myMin splitList = foldr min (Split (Literal 0 0) 2) splitList
+
+myMax :: [Split] -> Split
+myMax splitList = foldr max (Split (Literal 0 0) (-1)) splitList
+
+maxIndex :: Ord a => [a] -> Int
+maxIndex xs = head $ filter ((== maximum xs) . (xs !!)) [0..]
+
 \end{code}
 
 \end{document}
