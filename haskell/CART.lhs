@@ -14,7 +14,7 @@
 
 \lstset
 {
-    language=Haskell,
+    language=haskell,
     basicstyle=\small\ttfamily,
     flexiblecolumns=false,
     basewidth={0.5em,0.45em},
@@ -46,11 +46,15 @@
 
 \section{Preamble}
 \begin{code}
+import Numeric.LinearAlgebra
+import Prelude hiding ((<>))
+
 import Text.ParserCombinators.Parsec
 import Data.CSV
 import Data.List
 
-import DataSet
+type Vec = Vector R
+type Mat = Matrix R
 \end{code}
 
 \section{Data Type Definition}
@@ -61,46 +65,83 @@ import DataSet
     &\text{Data Space}&\mathcal{D}&=\fspace\times\lspace
 \end{align*}
 \begin{code}
-type DataSet = [DataPoint]
+type Feature    = [Double]
+type Label      = Int
+type DataSet    = [DataPoint]
+
+data DataPoint = DataPoint {
+    dFeature :: Feature,
+    dLabel   :: Label
+} deriving Show
 \end{code}
 
 \newpage
-\subsection{Data Space}
+\subsection{Constants}
 \begin{code}
-data Literal = Literal{lFeatureIdx :: Int, lValue :: Double} deriving Show
+featureNum :: Int
+featureNum = 4
 
-data Split = Split {sLiteral :: Literal, sScore :: Double} deriving Show
+labelNum :: Int
+labelNum = 3
+\end{code}
+
+\subsection{Tree Structure}
+\subsubsection{Literal}
+\begin{code}
+data Literal = Literal {
+    lFeatureIdx :: Int,
+    lValue :: Double
+} deriving Show
+\end{code}
+
+\subsubsection{Split}
+\begin{code}
+data Split = Split {
+    sLiteral :: Literal,
+    sScore :: Double
+} deriving Show
 
 instance Eq Split where
     (Split l s) == (Split l' s') = s == s'
 
 instance Ord Split where
     compare (Split l s) (Split l' s') = compare s s'
+\end{code}
 
+\subsubsection{Tree}
+\begin{code}
 data Tree = Leaf {label :: Int} | 
             Node {literal :: Literal, left :: Tree, right :: Tree}
             deriving Show
 \end{code}
 
+\newpage
 \section{Gini Impurity}
+\subsection{Class Ratio}
 \begin{align*}
-    \mathrm{Gini}&:\lspace^n\to\mathbb{R} \\
-    \mathrm{Gini}(L)&=1-\sum_{i=0}^{L-1}p_i(L)^2 \\
-    p_i(L)&=\frac{1}{|L|}\sum_{l\in L}\mathbb{I}[l=i]
+    &\text{Label Set}&&L=\left\{y\mid(\bm{x},y)\in D\right\} \\[7pt]
+    &\text{Label Count}&&c_l(L)=\sum_{i\in L}\mathbb{I}[i=l],\quad
+        &&\bm{c}(L)=\sum_{i\in L}\operatorname{onehot}(i) \\[4pt]
+    &\text{Class Ratio}&&p_l(L)=\frac{c_l(L)}{|L|},\quad
+        &&\bm{p}(L)=\frac{\bm{c}(L)}{\|\bm{c}(L)\|_1}
+\end{align*}
+\begin{code}
+labelCount :: [Label] -> Vec
+labelCount = sum . (map $ oneHotVector labelNum)
+
+classRatio :: [Label] -> Vec
+classRatio labels = scale (1 / (norm_1 countVec)) $ countVec
+    where countVec = labelCount labels
+\end{code}
+
+\subsection{Gini Impurity}
+\begin{align*}
+    % \mathrm{Gini}&:\lspace^n\to\mathbb{R} \\
+    \mathrm{Gini}(L)&=1-\sum_{l=0}^{L-1}p_l(L)^2=1-\|\bm{p}(L)\|_2^2
 \end{align*}
 \begin{code}
 gini :: [Label] -> Double
-gini labels = 1.0 - (sum $ map (^ 2) $ pList labels)
-
-pList :: [Label] -> [Double]
-pList labels = map (/ labelSetSize) $ map fromIntegral $ cntList labels 0
-    where labelSetSize = fromIntegral $ length labels
-
-cntList :: [Label] -> Int -> [Int]
-cntList labels trg = 
-    if trg == labelNum
-        then []
-        else [length $ filter (== trg) labels] ++ (cntList labels $ trg + 1)
+gini labels = 1.0 - (norm_2 $ classRatio labels) ^ 2
 \end{code}
 
 \newpage
@@ -156,24 +197,36 @@ bestSplit dataSet = myMin splitList
     where splitList = [bestSplitAtFeature dataSet f | f <- [0,1..featureNum-1]]
 \end{code}
 
+\section{Grow Tree}
+\subsection{Grow Tree}
 \begin{code}
 growTree :: DataSet -> Int -> Int -> Tree
 growTree dataSet depth maxDepth =
-    if depth == maxDepth
-        then Leaf $ majorLabel [y | (DataPoint x y) <- dataSet]
+    if stopGrowing
+        then Leaf $ majorLabel dataSet
         else Node literal leftTree rightTree
     where
         literal         = sLiteral $ bestSplit dataSet
         leftTree        = growTree lData (depth + 1) maxDepth
         rightTree       = growTree rData (depth + 1) maxDepth
         [lData, rData]  = splitData dataSet literal
-
-majorLabel :: [Label] -> Label
-majorLabel labels = maxIndex $ cntList labels 0
+        stopGrowing =
+            depth == maxDepth || 
+            gini [y | (DataPoint x y) <- dataSet] == 0 ||
+            length lData == 0 || length rData == 0
 \end{code}
 
+\subsection{Stop Growing}
+$$
+    \operatorname{majorLabel}(D)=\underset{l\in\lspace}
+    {\operatorname{argmax}}\sum_{(\bm{x},y)\in D}\mathbb{I}\left[y=l\right]
+$$
+\begin{code}
+majorLabel :: DataSet -> Label
+majorLabel dataSet = maxIndex $ labelCount [y | (DataPoint x y) <- dataSet]
+\end{code}
 
-\section{Main}
+\section{Output Tree}
 \begin{code}
 branchToString :: Int -> String
 branchToString depth = "|" ++ (concat $ replicate depth "   |") ++ "--- "
@@ -189,27 +242,60 @@ treeToString (Node (Literal i v) leftTree rightTree) depth =
         str4 = ">= " ++ (show v) ++ "\n"
         str5 = treeToString rightTree $ depth + 1
     in str1 ++ str2 ++ str3 ++ str1 ++ str4 ++ str5
-    
+\end{code}
 
-
+\newpage
+\section{Main}
+\begin{code}
 main = do
     rawDataSet <- parseFromFile csvFile "../data/iris/iris.data"
     let dataSet = either (\x -> []) processData rawDataSet
-    print $ bestSplit dataSet
-    print $ scoreLiteral dataSet $ Literal 2 2.45
-    putStrLn $ treeToString (growTree dataSet 0 4) 0
+    let tree = growTree dataSet 0 10
+    putStrLn $ treeToString tree 0
+\end{code}
 
+\section{Other Functions}
+\subsection{I-O \& Data Processing}
+\begin{code}
+strLabelToIntLabel :: String -> Int
+strLabelToIntLabel str
+    | str == "Iris-setosa"      = 0
+    | str == "Iris-versicolor"  = 1
+    | str == "Iris-virginica"   = 2
+    | otherwise                 = 3
 
+processDataPoint :: [String] -> DataPoint
+processDataPoint strs = DataPoint feature label
+    where
+        feature = map (read :: String -> Double) $ init strs
+        label   = strLabelToIntLabel $ last strs
 
+processData :: [[String]] -> [DataPoint]
+processData rawData = map processDataPoint rawData
+\end{code}
+
+\subsection{Algorithm}
+\begin{code}
 myMin :: [Split] -> Split
 myMin splitList = foldr min (Split (Literal 0 0) 2) splitList
 
 myMax :: [Split] -> Split
 myMax splitList = foldr max (Split (Literal 0 0) (-1)) splitList
 
-maxIndex :: Ord a => [a] -> Int
-maxIndex xs = head $ filter ((== maximum xs) . (xs !!)) [0..]
+myMaxIndex :: Ord a => [a] -> Int
+myMaxIndex xs = head $ filter ((== maximum xs) . (xs !!)) [0..]
 
+oneHotList :: Int -> Int -> [Double]
+oneHotList len idx =
+    if len == 0
+        then []
+        else
+            if idx == 0
+                then 1 : oneHotList (len - 1) (idx - 1)
+                else 0 : oneHotList (len - 1) (idx - 1)
+
+oneHotVector :: Int -> Int -> Vec
+oneHotVector len idx = vector $ oneHotList len idx
 \end{code}
 
 \end{document}
