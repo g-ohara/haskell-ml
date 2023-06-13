@@ -8,6 +8,7 @@
 #include <map>
 
 const int F = 4;
+const int L = 3;
 
 typedef std::array<double, F> Features;
 typedef int Label;

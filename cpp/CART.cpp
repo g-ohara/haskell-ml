@@ -19,30 +19,49 @@ Node::~Node(void)
             delete trg;
 }
 
-bool homogeneous(Data D)
+bool homogeneous(Data D, int depth, int max_depth)
 {
-    int true_point_num = 0;
-    for (const Point &trg : D)
-        if (trg.label)
-            ++true_point_num;
+    return depth == max_depth;
+    // int true_point_num = 0;
+    // for (const Point &trg : D)
+    //     if (trg.label)
+    //         ++true_point_num;
 
-    return (true_point_num == 0 || true_point_num == (int)D.size());
+    // return (true_point_num == 0 || true_point_num == (int)D.size());
 }
 
 Node *label(Data D)
 {
-    return new Node{D.at(0).label};
+    std::array<int, L> label_cnt = {0};
+    for (const Point &trg : D)
+        ++label_cnt.at(trg.label);
+
+    int major_label = 0;
+    int major_count = 0;
+    for (int i = 0; i < L; ++i)
+    {
+        if (label_cnt.at(i) > major_count)
+        {
+            major_label = i;
+            major_count = label_cnt.at(i);
+        }
+    }
+    return new Node{major_label};
 }
 
 double Imp(Data D)
 {
-    int true_point_num = 0;
+    std::array<int, L> label_cnt = {0};
     for (const Point &trg : D)
-        if (trg.label)
-            ++true_point_num;
+        ++label_cnt.at(trg.label);
 
-    double p = (double)true_point_num / (double)D.size();
-    return 2.0 * p * (1.0 - p);
+    double gini = 1.0;
+    for (int cnt : label_cnt)
+    {
+        double p = (double)cnt / (double)D.size();
+        gini -= p * p;
+    }
+    return gini;
 }
 
 double Imp(Data D_[2])
@@ -84,10 +103,10 @@ Literal best_split(Data D, int F)
     return {f_best, val_best};
 }
 
-Node *grow_tree(Data D, int F)
+Node *grow_tree(Data D, int F, int depth, int max_depth)
 {
     // 1
-    if (homogeneous(D))
+    if (homogeneous(D, depth, max_depth))
         return label(D);
 
     Node *tree = new Node;
@@ -105,7 +124,7 @@ Node *grow_tree(Data D, int F)
         if (D_[i].empty())
             tree->child[i] = label(D);
         else
-            tree->child[i] = grow_tree(D_[i], F);
+            tree->child[i] = grow_tree(D_[i], F, depth + 1, max_depth);
 
     return tree; // 根ノードがSでラベル付けされ, 子がT_iである木
 }
@@ -171,6 +190,6 @@ int main(void)
     Data D;
     get_data(D, "../data/iris/iris.data");
     output_data(D);
-    display(grow_tree(D, F));
+    display(grow_tree(D, F, 0, 5));
     return 0;
 }
