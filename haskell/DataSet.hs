@@ -1,8 +1,13 @@
 module DataSet where
 
+featureNum :: Int
+labelNum :: Int
+featureNum = 4
+labelNum = 3
+
 data DataPoint = DataPoint {
-    feature :: [Double],
-    label   :: Int
+    dFeature :: [Double],
+    dLabel   :: Int
 } deriving Show
 
 strLabelToIntLabel :: String -> Int
