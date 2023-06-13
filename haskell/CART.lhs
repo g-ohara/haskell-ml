@@ -1,8 +1,9 @@
 \documentclass[dvipdfmx,11pt]{article}
+\usepackage{a4wide}
 \usepackage{listings}
 \usepackage{color}
 \usepackage{bm}
-% \usepackage{amsmath}
+\usepackage{amsmath}
 \usepackage{amssymb}
 
 \lstloadlanguages{Haskell}
@@ -25,6 +26,7 @@
         {>>}{{>>}}2 {>>=}{{>>=}}2
         {|}{{$\mid$}}1,
     frame=single,
+    linewidth=40em,
     frameround=tttt, % makes four corners round
     keywordstyle={\color[rgb]{0,0,1}},
     stringstyle={\color[rgb]{0.6,0,0.6}},
@@ -37,10 +39,12 @@
     xrightmargin=0zw,
     numberstyle={\scriptsize},
     stepnumber=1,
-    lineskip=-0.5ex,
+    lineskip=0ex,
     tabsize=4,
     escapeinside={(@}{@)}
 }
+\newcommand{\fspace}{\mathcal{F}}
+\newcommand{\lspace}{\mathcal{L}}
 
 \begin{document}
 \title{CART in Haskell}
@@ -58,27 +62,39 @@ import DataSet
 \end{code}
 
 \section{Data Type Definition}
+\subsection{Data Space}
+\begin{align*}
+    &\text{Feature Space}&\fspace&=\mathbb{R}^D \\
+    &\text{Label Space}&\lspace&=\left\{0,1,\dots,L-1\right\} \\
+    &\text{Data Space}&\mathcal{D}&=\fspace\times\lspace
+\end{align*}
 \begin{code}
 type DataSet = [DataPoint]
+\end{code}
 
+\newpage
+\subsection{Data Space}
+\begin{code}
 data Literal = Literal{lFeatureIdx :: Int, lValue :: Double} deriving Show
 
 data Split = Split {sLiteral :: Literal, sScore :: Double} deriving Show
 
 instance Eq Split where
     (Split l s) == (Split l' s') = (Prelude.==) s s'
--- (Split l s) /= (Split l' s') = (Prelude./=) s s'
 
 instance Ord Split where
     (Split l s) <= (Split l' s') = (Prelude.<=) s s'
 
-data Tree = 
-    Leaf {label :: Int} | 
-    Node {literal :: Literal, left :: Tree, right :: Tree}
-    deriving Show
+data Tree = Leaf {label :: Int} | 
+            Node {literal :: Literal, left :: Tree, right :: Tree}
+            deriving Show
 \end{code}
 
 \section{Gini Impurity}
+\begin{align*}
+    \mathrm{Gini}(D)&=1-\sum_{l=0}^{L-1}p_l(D)^2 \\
+    p_l(D)&=\frac{1}{|D|}\sum_{(x,y)\in D}\mathbb{I}[y=l]
+\end{align*}
 \begin{code}
 gini :: DataSet -> Double
 gini points = 1.0 - (sum $ map (^ 2) pList)
@@ -91,6 +107,7 @@ gini points = 1.0 - (sum $ map (^ 2) pList)
             length $ filter (\x -> (Prelude.==) (dLabel x) 2) points]
 \end{code}
 
+\newpage
 \section{Split Data}
 \begin{code}
 splitData :: DataSet -> Literal -> [DataSet]
