@@ -3,6 +3,6 @@ services:
     image: genjiohara/haskell-stack
     container_name: DT-stack
     volumes:
-      - ./:/workspace
-    working_dir: /workspace
+      - ../:/workspace
+    working_dir: /workspace/haskell
     tty: true
