@@ -14,17 +14,10 @@
 
 \lstset
 {
+    language=Haskell,
     basicstyle=\small\ttfamily,
     flexiblecolumns=false,
     basewidth={0.5em,0.45em},
-    literate={+}{{$+$}}1 {/}{{$/$}}1 {*}{{$*$}}1 {=}{{$=$}}1
-        {>}{{$>$}}1 {<}{{$<$}}1 {\\}{{$\lambda$}}1
-        {\\\\}{{\char`\\\char`\\}}1
-        {->}{{$\rightarrow$}}2 {>=}{{$\geq$}}2 {<-}{{$\leftarrow$}}2
-        {<=}{{$\leq$}}2 {=>}{{$\Rightarrow$}}2
-        {\ .}{{$\circ$}}2 {\ .\ }{{$\circ$}}2
-        {>>}{{>>}}2 {>>=}{{>>=}}2
-        {|}{{$\mid$}}1,
     frame=single,
     linewidth=40em,
     frameround=tttt, % makes four corners round
@@ -57,6 +50,7 @@ import Numeric.LinearAlgebra
 import Prelude hiding ((<>))
 import Text.ParserCombinators.Parsec
 import Data.CSV
+import Data.List
 
 import DataSet
 \end{code}
@@ -80,10 +74,10 @@ data Literal = Literal{lFeatureIdx :: Int, lValue :: Double} deriving Show
 data Split = Split {sLiteral :: Literal, sScore :: Double} deriving Show
 
 instance Eq Split where
-    (Split l s) == (Split l' s') = (Prelude.==) s s'
+    (Split l s) == (Split l' s') = s == s'
 
 instance Ord Split where
-    (Split l s) <= (Split l' s') = (Prelude.<=) s s'
+    compare (Split l s) (Split l' s') = compare s s'
 
 data Tree = Leaf {label :: Int} | 
             Node {literal :: Literal, left :: Tree, right :: Tree}
@@ -112,37 +106,56 @@ cntList labels trg =
 \end{code}
 
 \newpage
-\section{Split Data}
+\section{Search Best Split}
+\subsection{Split Data}
 \begin{align*}
-    D_l(i,v)&=\left\{(\bm{x},y)\in D\mid x_i<v\right\} \\
-    D_r(i,v)&=\left\{(\bm{x},y)\in D\mid x_i\ge v\right\}
+    D_l(D,i,v)&=\left\{(\bm{x},y)\in D\mid x_i<v\right\} \\
+    D_r(D,i,v)&=\left\{(\bm{x},y)\in D\mid x_i\ge v\right\}
 \end{align*}
 
 \begin{code}
 splitData :: DataSet -> Literal -> [DataSet]
-splitData dataSet literal = [lData, rData]
+splitData dataSet (Literal i v) = [lData, rData]
     where
-        lData = [(DataPoint x y) | (DataPoint x y) <- dataSet, x !! i <  v]
-        rData = [(DataPoint x y) | (DataPoint x y) <- dataSet, x !! i >= v]
-        i = lFeatureIdx literal
-        v = lValue literal
+        lData = [(DataPoint x y) | (DataPoint x y) <- dataSet, x !! i <= v]
+        rData = [(DataPoint x y) | (DataPoint x y) <- dataSet, x !! i >  v]
+\end{code}
 
+\subsection{Score Splitted Data}
+\begin{align*}
+    \mathrm{score}(D,i,v)=\frac{|D_l|}{|D|}\mathrm{gini}\left[D_l(D,i,v)\right]
+    +\frac{|D_r|}{|D|}\mathrm{gini}\left[D_r(D,i,v)\right]
+\end{align*}
+
+\begin{code}
 scoreLiteral :: DataSet -> Literal -> Split
 scoreLiteral dataSet literal = Split literal score
     where
-        score = sum $ map (\x -> (gini $ map dLabel x) * (fromIntegral $ length x) / dataSize) splittedData
-        dataSize = fromIntegral $ length dataSet
-        splittedData = splitData dataSet literal
+        score = sum $ map (weightedGini (length dataSet)) $ labelSet
+        labelSet = map (map dLabel) $ splitData dataSet literal 
 
-bestSplitAtGivenFeature :: DataSet -> Int -> Split
-bestSplitAtGivenFeature dataSet featureIdx = maximum splitList
+weightedGini :: Int -> [Label] -> Double
+weightedGini wholeSize labelSet = (gini labelSet) * dblDataSize / dblWholeSize
     where
-        splitList = map (scoreLiteral dataSet) literalList :: [Split]
-        literalList = map (Literal featureIdx) $ valueList
-        valueList = map (\x -> (dFeature x) !! featureIdx) dataSet
+        dblDataSize     = fromIntegral $ length labelSet
+        dblWholeSize    = fromIntegral wholeSize
+\end{code}
+
+\subsection{Search Best Split}
+\begin{align*}
+    \underset{i,v}{\operatorname{argmin}}\operatorname{score}(D,i,v)
+\end{align*}
+
+\begin{code}
+bestSplitAtFeature :: DataSet -> Int -> Split
+bestSplitAtFeature dataSet i = foldr min (Split (Literal 0 0) 1) splitList
+    where
+        splitList   = [scoreLiteral dataSet l | l <- literalList]
+        literalList = [Literal i (x !! i) | (DataPoint x y) <- dataSet]
 
 bestSplit :: DataSet -> Split
-bestSplit dataSet = maximum $ map (bestSplitAtGivenFeature dataSet) [0,1..featureNum-1]
+bestSplit dataSet = foldr min (Split (Literal 0 0) 1) splitList
+    where splitList = [bestSplitAtFeature dataSet f | f <- [0,1..featureNum-1]]
 \end{code}
 
 \section{Main}
@@ -151,6 +164,7 @@ main = do
     rawDataSet <- parseFromFile csvFile "../data/iris/iris.data"
     let dataSet = either (\x -> []) processData rawDataSet
     print $ bestSplit dataSet
+    print $ scoreLiteral dataSet $ Literal 2 2.45
 \end{code}
 
 \end{document}
