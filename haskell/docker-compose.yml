@@ -6,3 +6,10 @@ services:
       - ../:/workspace
     working_dir: /workspace/haskell
     tty: true
+  latex:
+    image: paperist/alpine-texlive-ja
+    container_name: DT-latex
+    volumes:
+      - ./:/workspace
+    working_dir: /workspace
+    tty: true
