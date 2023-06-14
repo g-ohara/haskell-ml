@@ -14,7 +14,7 @@
 
 \lstset
 {
-    language=haskell,
+    % language=Haskell,
     basicstyle=\small\ttfamily,
     flexiblecolumns=false,
     basewidth={0.5em,0.45em},
@@ -226,6 +226,7 @@ majorLabel :: DataSet -> Label
 majorLabel dataSet = maxIndex $ labelCount [y | (DataPoint x y) <- dataSet]
 \end{code}
 
+\newpage
 \section{Output Tree}
 \begin{code}
 branchToString :: Int -> String
@@ -243,6 +244,7 @@ treeToString (Node (Literal i v) leftTree rightTree) depth =
         str5 = treeToString rightTree $ depth + 1
     in str1 ++ str2 ++ str3 ++ str1 ++ str4 ++ str5
 \end{code}
+\lstinputlisting[caption=Example]{output-tree}
 
 \newpage
 \section{Main}
