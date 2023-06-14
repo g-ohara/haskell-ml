@@ -1,3 +1,5 @@
 *.hi
 *.o
-haskell_CART
+*.aux
+*.log
+haskell-CART
