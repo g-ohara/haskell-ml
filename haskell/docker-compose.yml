@@ -1,5 +1,5 @@
 services:
-  app:
+  stack:
     image: genjiohara/haskell-stack
     container_name: DT-stack
     volumes:
@@ -11,5 +11,15 @@ services:
     container_name: DT-latex
     volumes:
       - ./:/workspace
+    working_dir: /workspace
+    tty: true
+  graphviz:
+    image: genjiohara/graphviz
+    container_name: DT-graphviz
+    volumes:
+      - ./:/workspace
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    environment:
+      - DISPLAY=$DISPLAY
     working_dir: /workspace
     tty: true

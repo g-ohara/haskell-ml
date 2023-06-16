@@ -5,6 +5,7 @@
 \usepackage{bm}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage[dvipdfmx]{graphicx}
 
 \lstloadlanguages{Haskell}
 \lstnewenvironment{code}
@@ -110,8 +111,8 @@ instance Ord Split where
 
 \subsubsection{Tree}
 \begin{code}
-data Tree = Leaf {label :: Int} | 
-            Node {literal :: Literal, left :: Tree, right :: Tree}
+data Tree = Leaf {label :: Int, id :: String} | 
+            Node {literal :: Literal, left :: Tree, right :: Tree, id :: String}
             deriving Show
 \end{code}
 
@@ -200,15 +201,15 @@ bestSplit dataSet = myMin splitList
 \section{Grow Tree}
 \subsection{Grow Tree}
 \begin{code}
-growTree :: DataSet -> Int -> Int -> Tree
-growTree dataSet depth maxDepth =
+growTree :: DataSet -> Int -> Int -> String -> Tree
+growTree dataSet depth maxDepth id =
     if stopGrowing
-        then Leaf $ majorLabel dataSet
-        else Node literal leftTree rightTree
+        then Leaf (majorLabel dataSet) id
+        else Node literal leftTree rightTree id
     where
         literal         = sLiteral $ bestSplit dataSet
-        leftTree        = growTree lData (depth + 1) maxDepth
-        rightTree       = growTree rData (depth + 1) maxDepth
+        leftTree        = growTree lData (depth + 1) maxDepth (id ++ "l")
+        rightTree       = growTree rData (depth + 1) maxDepth (id ++ "r")
         [lData, rData]  = splitData dataSet literal
         stopGrowing =
             depth == maxDepth || 
@@ -229,13 +230,17 @@ majorLabel dataSet = maxIndex $ labelCount [y | (DataPoint x y) <- dataSet]
 \newpage
 \section{Output Tree}
 \begin{code}
+literalToStr :: Literal -> Bool -> String
+literalToStr (Literal i v) less = 
+    "Feature[" ++ (show i) ++ "]" ++ if less then "< " else ">= " ++ (show v)
+
 branchToString :: Int -> String
 branchToString depth = "|" ++ (concat $ replicate depth "   |") ++ "--- "
 
 treeToString :: Tree -> Int -> String
-treeToString (Leaf label) depth = 
+treeToString (Leaf label id) depth = 
     branchToString depth ++ "class: " ++ (show label) ++ "\n"
-treeToString (Node (Literal i v) leftTree rightTree) depth =
+treeToString (Node (Literal i v) leftTree rightTree id) depth =
     let
         str1 = branchToString depth ++ "Feature[" ++ (show i) ++ "] "
         str2 = "< " ++ (show v) ++ "\n"
@@ -244,7 +249,34 @@ treeToString (Node (Literal i v) leftTree rightTree) depth =
         str5 = treeToString rightTree $ depth + 1
     in str1 ++ str2 ++ str3 ++ str1 ++ str4 ++ str5
 \end{code}
-\lstinputlisting[caption=Example]{output-tree}
+\lstinputlisting[caption=Example of CLI output]{output-tree}
+
+\newpage
+\section{Output Tree in GraphViz}
+\begin{code}
+labelToStringForGraphViz :: Tree -> String
+labelToStringForGraphViz (Leaf label id) =
+    id ++ " [label=\"Class: " ++ (show label) ++ "\"]\n"
+labelToStringForGraphViz (Node (Literal i v) left right id) =
+    id ++ " [shape=box,label=\"Feature[" ++ (show i) ++ "] < " ++ (show v) ++ "\"]\n" ++
+    labelToStringForGraphViz left ++ labelToStringForGraphViz right
+
+nodeToStringForGraphViz :: Tree -> String
+nodeToStringForGraphViz (Leaf label id) = id ++ ";\n"
+nodeToStringForGraphViz (Node lLiteral left right id) =
+    id ++ " -- " ++ nodeToStringForGraphViz left ++
+    id ++ " -- " ++ nodeToStringForGraphViz right
+
+treeToStringForGraphViz :: Tree -> String
+treeToStringForGraphViz tree = 
+    "graph Tree {\n" ++ labelToStringForGraphViz tree ++ nodeToStringForGraphViz tree ++ "}"
+\end{code}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=15cm]{output-tree.png}
+    \caption{Example of GraphViz output}
+\end{figure}
+
 
 \newpage
 \section{Main}
@@ -252,8 +284,9 @@ treeToString (Node (Literal i v) leftTree rightTree) depth =
 main = do
     rawDataSet <- parseFromFile csvFile "../data/iris/iris.data"
     let dataSet = either (\x -> []) processData rawDataSet
-    let tree = growTree dataSet 0 10
+    let tree = growTree dataSet 0 10 "n"
     putStrLn $ treeToString tree 0
+    writeFile "tree.dot" $ treeToStringForGraphViz tree
 \end{code}
 
 \section{Other Functions}
