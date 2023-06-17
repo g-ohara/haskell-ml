@@ -1,5 +1,6 @@
 .vscode/
 *.aux
+*.hi
 *.log
 *.o
 haskell-CART
