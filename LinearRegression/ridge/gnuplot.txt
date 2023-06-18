@@ -1,0 +1,6 @@
+reset
+set terminal x11
+set datafile separator whitespace
+splot 'data/weight.dat' using (w0=$1):(w1=$2):(w2=$3)
+splot "data/dataset.dat" using 1:2:3 with points, w0+w1*x+w2*y
+pause -1 "Hit any key to continue"

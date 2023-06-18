@@ -1,0 +1,25 @@
+services:
+  haskell:
+    image: genjiohara/haskell-stack
+    container_name: haskell-stack
+    volumes:
+      - ./:/workspace
+    working_dir: /workspace
+    tty: true
+  gnuplot:
+    image: genjiohara/gnuplot
+    container_name: gnuplot
+    volumes:
+      - ./:/workspace
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    environment:
+      - DISPLAY=$DISPLAY
+    working_dir: /workspace
+    tty: true
+  latex:
+    image: paperist/alpine-texlive-ja
+    container_name: latex
+    volumes:
+      - ./:/workspace
+    working_dir: /workspace
+    tty: true

@@ -1,0 +1,1 @@
+docker exec latex ptex2pdf -l Ridge
