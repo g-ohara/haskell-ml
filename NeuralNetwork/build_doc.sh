@@ -1,0 +1,1 @@
+docker exec haskell-DNN-latex ptex2pdf -l two_layer_net.lhs
