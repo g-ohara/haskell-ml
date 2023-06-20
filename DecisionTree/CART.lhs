@@ -92,7 +92,10 @@ labelNum = 3
 data Literal = Literal {
     lFeatureIdx :: Int,
     lValue :: Double
-} deriving Show
+} 
+
+instance Show Literal where
+    show (Literal i v) = "Feature[" ++ (show i) ++ "] < " ++ (show v)
 \end{code}
 
 \subsubsection{Split}
@@ -113,8 +116,28 @@ instance Ord Split where
 \begin{code}
 data Tree = Leaf {label :: Int, id :: String} | 
             Node {literal :: Literal, left :: Tree, right :: Tree, id :: String}
-            deriving Show
 \end{code}
+
+\newpage
+\section{Output Tree}
+\begin{code}
+instance Show Tree where
+    show tree = treeToString tree 0
+
+treeToString :: Tree -> Int -> String
+treeToString (Leaf label id) depth = 
+    branchToString depth ++ "class: " ++ (show label) ++ "\n"
+treeToString (Node literal leftTree rightTree id) depth =
+    let str1 = branchToString depth ++ show literal ++ "\n"
+        str2 = treeToString leftTree (depth + 1)
+        str3 = branchToString depth ++ "!" ++ show literal ++ "\n"
+        str4 = treeToString rightTree $ depth + 1
+    in str1 ++ str2 ++ str3 ++ str4
+
+branchToString :: Int -> String
+branchToString depth = "|" ++ (concat $ replicate depth "   |") ++ "--- "
+\end{code}
+\lstinputlisting[caption=Example of CLI output]{output/output-tree}
 
 \newpage
 \section{Gini Impurity}
@@ -228,30 +251,6 @@ majorLabel dataSet = maxIndex $ labelCount [y | (DataPoint x y) <- dataSet]
 \end{code}
 
 \newpage
-\section{Output Tree}
-\begin{code}
-literalToStr :: Literal -> Bool -> String
-literalToStr (Literal i v) less = 
-    "Feature[" ++ (show i) ++ "]" ++ if less then "< " else ">= " ++ (show v)
-
-branchToString :: Int -> String
-branchToString depth = "|" ++ (concat $ replicate depth "   |") ++ "--- "
-
-treeToString :: Tree -> Int -> String
-treeToString (Leaf label id) depth = 
-    branchToString depth ++ "class: " ++ (show label) ++ "\n"
-treeToString (Node (Literal i v) leftTree rightTree id) depth =
-    let
-        str1 = branchToString depth ++ "Feature[" ++ (show i) ++ "] "
-        str2 = "< " ++ (show v) ++ "\n"
-        str3 = treeToString leftTree $ depth + 1
-        str4 = ">= " ++ (show v) ++ "\n"
-        str5 = treeToString rightTree $ depth + 1
-    in str1 ++ str2 ++ str3 ++ str1 ++ str4 ++ str5
-\end{code}
-\lstinputlisting[caption=Example of CLI output]{output/output-tree}
-
-\newpage
 \section{Output Tree in GraphViz}
 \begin{code}
 labelToStringForGraphViz :: Tree -> String
@@ -285,7 +284,7 @@ main = do
     rawDataSet <- parseFromFile csvFile "data/iris/iris.data"
     let dataSet = either (\x -> []) processData rawDataSet
     let tree = growTree dataSet 0 10 "n"
-    let treeStr = treeToString tree 0
+    let treeStr = show tree
     putStrLn treeStr 
     writeFile "output/output-tree" treeStr
     writeFile "output/tree.dot" $ treeToStringForGraphViz tree
