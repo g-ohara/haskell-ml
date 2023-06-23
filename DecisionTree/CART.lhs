@@ -293,12 +293,15 @@ main = do
 \section{Other Functions}
 \subsection{I-O \& Data Processing}
 \begin{code}
-strLabelToIntLabel :: String -> Int
-strLabelToIntLabel str
-    | str == "Iris-setosa"      = 0
-    | str == "Iris-versicolor"  = 1
-    | str == "Iris-virginica"   = 2
-    | otherwise                 = 3
+strLabelToIntLabel :: [String] -> [Int]
+strLabelToIntLabel strLabels = map labelToIndex strLabels
+    where labelToIndex label = findIndex (label ==) $ unique strLabels
+
+processLabel :: [[String]] -> [[Int]]
+processLabel rawData = transpose $ features ++ labels
+    where
+        features    = reverse $ tails $ reverse $ transpose rawData
+        labels      = strLabelToIntLabel $ last $ transpose rawData
 
 processDataPoint :: [String] -> DataPoint
 processDataPoint strs = DataPoint feature label
