@@ -47,12 +47,9 @@
 
 \section{Preamble}
 \begin{code}
+import DataProcessing
 import Numeric.LinearAlgebra
 import Prelude hiding ((<>))
-
-import Text.ParserCombinators.Parsec
-import Data.CSV
-import Data.List
 
 type Vec = Vector R
 -- type Mat = Matrix R
@@ -65,16 +62,6 @@ type Vec = Vector R
     &\text{Label Space}&\lspace&=\left\{0,1,\dots,L-1\right\} \\
     &\text{Data Space}&\mathcal{D}&=\fspace\times\lspace
 \end{align*}
-\begin{code}
-type Feature    = [Double]
-type Label      = Int
-type DataSet    = [DataPoint]
-
-data DataPoint = DataPoint {
-    dFeature :: Feature,
-    dLabel   :: Label
-} deriving Show
-\end{code}
 
 \newpage
 \subsection{Constants}
@@ -284,8 +271,7 @@ treeToStringForGraphViz tree =
 \begin{code}
 main :: IO()
 main = do
-    rawDataSet <- parseFromFile csvFile "data/iris/iris.data"
-    let dataSet = either (\_ -> []) processData rawDataSet
+    dataSet <- readDataFromCSV "data/iris/iris.data"
     let tree = growTree dataSet 0 10 "n"
     let treeStr = show tree
     putStrLn treeStr 
@@ -294,39 +280,10 @@ main = do
 \end{code}
 
 \section{Other Functions}
-\subsection{I-O \& Data Processing}
-\begin{code}
-strLabelToIntLabel :: [String] -> [Int]
-strLabelToIntLabel strLabels = map (maybeToInt . labelToIndex) strLabels
-    where
-        labelToIndex l = findIndex (l ==) $ nub strLabels
-
-maybeToInt :: Maybe Int -> Int
-maybeToInt Nothing = 0
-maybeToInt (Just a) = a
-        
-processData :: [[String]] -> [DataPoint]
-processData rawData = concatDataPoint feature labs
-    where
-        feature = map ((map (read :: String -> Double)) . init) $ rawData
-        labs    = strLabelToIntLabel $ last $ transpose rawData
-
-concatDataPoint :: [[Double]] -> [Int] -> [DataPoint]
-concatDataPoint (f:fs) (l:ls) = DataPoint f l : concatDataPoint fs ls
-concatDataPoint [] _ = []
-concatDataPoint _ [] = []
-\end{code}
-
 \subsection{Algorithm}
 \begin{code}
 myMin :: [Split] -> Split
 myMin splitList = foldr min (Split (Literal 0 0) 2) splitList
-
--- myMax :: [Split] -> Split
--- myMax splitList = foldr max (Split (Literal 0 0) (-1)) splitList
- 
--- myMaxIndex :: Ord a => [a] -> Int
--- myMaxIndex xs = head $ filter ((== maximum xs) . (xs !!)) [0..]
 
 oneHotList :: Int -> Int -> [Double]
 oneHotList len idx =

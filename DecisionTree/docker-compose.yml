@@ -3,8 +3,8 @@ services:
     image: genjiohara/haskell-stack
     container_name: DT-stack
     volumes:
-      - ./:/workspace
-    working_dir: /workspace
+      - ../:/workspace
+    working_dir: /workspace/DecisionTree
     tty: true
   latex:
     image: paperist/alpine-texlive-ja
