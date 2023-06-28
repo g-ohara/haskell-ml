@@ -294,23 +294,24 @@ main = do
 \subsection{I-O \& Data Processing}
 \begin{code}
 strLabelToIntLabel :: [String] -> [Int]
-strLabelToIntLabel strLabels = map labelToIndex strLabels
-    where labelToIndex label = findIndex (label ==) $ unique strLabels
-
-processLabel :: [[String]] -> [[Int]]
-processLabel rawData = transpose $ features ++ labels
+strLabelToIntLabel strLabels = map (maybeToInt . labelToIndex) strLabels
     where
-        features    = reverse $ tails $ reverse $ transpose rawData
-        labels      = strLabelToIntLabel $ last $ transpose rawData
+        labelToIndex label = findIndex (label ==) $ nub strLabels
 
-processDataPoint :: [String] -> DataPoint
-processDataPoint strs = DataPoint feature label
-    where
-        feature = map (read :: String -> Double) $ init strs
-        label   = strLabelToIntLabel $ last strs
-
+maybeToInt :: Maybe Int -> Int
+maybeToInt Nothing = 0
+maybeToInt (Just a) = a
+        
 processData :: [[String]] -> [DataPoint]
-processData rawData = map processDataPoint rawData
+processData rawData = concatDataPoint feature labels
+    where
+        feature = map ((map (read :: String -> Double)) . init) $ rawData
+        labels  = strLabelToIntLabel $ last $ transpose rawData
+
+concatDataPoint :: [[Double]] -> [Int] -> [DataPoint]
+concatDataPoint (f:fs) (l:ls) = DataPoint f l : concatDataPoint fs ls
+concatDataPoint [] _ = []
+concatDataPoint _ [] = []
 \end{code}
 
 \subsection{Algorithm}
