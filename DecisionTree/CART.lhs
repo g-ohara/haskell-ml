@@ -55,7 +55,7 @@ import Data.CSV
 import Data.List
 
 type Vec = Vector R
-type Mat = Matrix R
+-- type Mat = Matrix R
 \end{code}
 
 \section{Data Type Definition}
@@ -89,10 +89,11 @@ labelNum = 3
 \subsection{Tree Structure}
 \subsubsection{Literal}
 \begin{code}
-data Literal = Literal {
-    lFeatureIdx :: Int,
-    lValue :: Double
-} 
+data Literal = Literal Int Double
+-- data Literal = Literal {
+--     lFeatureIdx :: Int,
+--     lValue :: Double
+-- } 
 
 instance Show Literal where
     show (Literal i v) = "Feature[" ++ (show i) ++ "] < " ++ (show v)
@@ -106,16 +107,17 @@ data Split = Split {
 } deriving Show
 
 instance Eq Split where
-    (Split l s) == (Split l' s') = s == s'
+    (Split _ s) == (Split _ s') = s == s'
 
 instance Ord Split where
-    compare (Split l s) (Split l' s') = compare s s'
+    compare (Split _ s) (Split _ s') = compare s s'
 \end{code}
 
 \subsubsection{Tree}
 \begin{code}
-data Tree = Leaf {label :: Int, id :: String} | 
-            Node {literal :: Literal, left :: Tree, right :: Tree, id :: String}
+data Tree = Leaf Int String | Node Literal Tree Tree String
+-- data Tree = Leaf {label :: Int, id :: String} | 
+--             Node {literal :: Literal, left :: Tree, right :: Tree, id :: String}
 \end{code}
 
 \newpage
@@ -125,9 +127,9 @@ instance Show Tree where
     show tree = treeToString tree 0
 
 treeToString :: Tree -> Int -> String
-treeToString (Leaf label id) depth = 
-    branchToString depth ++ "class: " ++ (show label) ++ "\n"
-treeToString (Node literal leftTree rightTree id) depth =
+treeToString (Leaf l _) depth = 
+    branchToString depth ++ "class: " ++ (show l) ++ "\n"
+treeToString (Node literal leftTree rightTree _) depth =
     let str1 = branchToString depth ++ show literal ++ "\n"
         str2 = treeToString leftTree (depth + 1)
         str3 = branchToString depth ++ "!" ++ show literal ++ "\n"
@@ -154,8 +156,8 @@ labelCount :: [Label] -> Vec
 labelCount = sum . (map $ oneHotVector labelNum)
 
 classRatio :: [Label] -> Vec
-classRatio labels = scale (1 / (norm_1 countVec)) $ countVec
-    where countVec = labelCount labels
+classRatio labelList = scale (1 / (norm_1 countVec)) $ countVec
+    where countVec = labelCount labelList
 \end{code}
 
 \subsection{Gini Impurity}
@@ -165,7 +167,7 @@ classRatio labels = scale (1 / (norm_1 countVec)) $ countVec
 \end{align*}
 \begin{code}
 gini :: [Label] -> Double
-gini labels = 1.0 - (norm_2 $ classRatio labels) ^ 2
+gini labelList = 1.0 - (norm_2 $ classRatio labelList) ^ 2
 \end{code}
 
 \newpage
@@ -214,7 +216,7 @@ bestSplitAtFeature :: DataSet -> Int -> Split
 bestSplitAtFeature dataSet i = myMin splitList
     where
         splitList   = [scoreLiteral dataSet l | l <- literalList]
-        literalList = [Literal i (x !! i) | (DataPoint x y) <- dataSet]
+        literalList = [Literal i (x !! i) | (DataPoint x _) <- dataSet]
 
 bestSplit :: DataSet -> Split
 bestSplit dataSet = myMin splitList
@@ -225,18 +227,18 @@ bestSplit dataSet = myMin splitList
 \subsection{Grow Tree}
 \begin{code}
 growTree :: DataSet -> Int -> Int -> String -> Tree
-growTree dataSet depth maxDepth id =
+growTree dataSet depth maxDepth nodeId =
     if stopGrowing
-        then Leaf (majorLabel dataSet) id
-        else Node literal leftTree rightTree id
+        then Leaf (majorLabel dataSet) nodeId
+        else Node literal leftTree rightTree nodeId
     where
         literal         = sLiteral $ bestSplit dataSet
-        leftTree        = growTree lData (depth + 1) maxDepth (id ++ "l")
-        rightTree       = growTree rData (depth + 1) maxDepth (id ++ "r")
+        leftTree        = growTree lData (depth + 1) maxDepth (nodeId ++ "l")
+        rightTree       = growTree rData (depth + 1) maxDepth (nodeId ++ "r")
         [lData, rData]  = splitData dataSet literal
         stopGrowing =
             depth == maxDepth || 
-            gini [y | (DataPoint x y) <- dataSet] == 0 ||
+            gini [y | (DataPoint _ y) <- dataSet] == 0 ||
             length lData == 0 || length rData == 0
 \end{code}
 
@@ -247,24 +249,24 @@ $$
 $$
 \begin{code}
 majorLabel :: DataSet -> Label
-majorLabel dataSet = maxIndex $ labelCount [y | (DataPoint x y) <- dataSet]
+majorLabel dataSet = maxIndex $ labelCount [y | (DataPoint _ y) <- dataSet]
 \end{code}
 
 \newpage
 \section{Output Tree in GraphViz}
 \begin{code}
 labelToStringForGraphViz :: Tree -> String
-labelToStringForGraphViz (Leaf label id) =
-    id ++ " [label=\"Class: " ++ (show label) ++ "\"]\n"
-labelToStringForGraphViz (Node (Literal i v) left right id) =
-    id ++ " [shape=box,label=\"Feature[" ++ (show i) ++ "] < " ++ (show v) ++ "\"]\n" ++
+labelToStringForGraphViz (Leaf l leafId) =
+    leafId ++ " [label=\"Class: " ++ (show l) ++ "\"]\n"
+labelToStringForGraphViz (Node (Literal i v) left right nodeId) =
+    nodeId ++ " [shape=box,label=\"Feature[" ++ (show i) ++ "] < " ++ (show v) ++ "\"]\n" ++
     labelToStringForGraphViz left ++ labelToStringForGraphViz right
 
 nodeToStringForGraphViz :: Tree -> String
-nodeToStringForGraphViz (Leaf label id) = id ++ ";\n"
-nodeToStringForGraphViz (Node lLiteral left right id) =
-    id ++ " -- " ++ nodeToStringForGraphViz left ++
-    id ++ " -- " ++ nodeToStringForGraphViz right
+nodeToStringForGraphViz (Leaf _ leafId) = leafId ++ ";\n"
+nodeToStringForGraphViz (Node _ left right nodeId) =
+    nodeId ++ " -- " ++ nodeToStringForGraphViz left ++
+    nodeId ++ " -- " ++ nodeToStringForGraphViz right
 
 treeToStringForGraphViz :: Tree -> String
 treeToStringForGraphViz tree = 
@@ -280,9 +282,10 @@ treeToStringForGraphViz tree =
 \newpage
 \section{Main}
 \begin{code}
+main :: IO()
 main = do
     rawDataSet <- parseFromFile csvFile "data/iris/iris.data"
-    let dataSet = either (\x -> []) processData rawDataSet
+    let dataSet = either (\_ -> []) processData rawDataSet
     let tree = growTree dataSet 0 10 "n"
     let treeStr = show tree
     putStrLn treeStr 
@@ -296,17 +299,17 @@ main = do
 strLabelToIntLabel :: [String] -> [Int]
 strLabelToIntLabel strLabels = map (maybeToInt . labelToIndex) strLabels
     where
-        labelToIndex label = findIndex (label ==) $ nub strLabels
+        labelToIndex l = findIndex (l ==) $ nub strLabels
 
 maybeToInt :: Maybe Int -> Int
 maybeToInt Nothing = 0
 maybeToInt (Just a) = a
         
 processData :: [[String]] -> [DataPoint]
-processData rawData = concatDataPoint feature labels
+processData rawData = concatDataPoint feature labs
     where
         feature = map ((map (read :: String -> Double)) . init) $ rawData
-        labels  = strLabelToIntLabel $ last $ transpose rawData
+        labs    = strLabelToIntLabel $ last $ transpose rawData
 
 concatDataPoint :: [[Double]] -> [Int] -> [DataPoint]
 concatDataPoint (f:fs) (l:ls) = DataPoint f l : concatDataPoint fs ls
@@ -319,11 +322,11 @@ concatDataPoint _ [] = []
 myMin :: [Split] -> Split
 myMin splitList = foldr min (Split (Literal 0 0) 2) splitList
 
-myMax :: [Split] -> Split
-myMax splitList = foldr max (Split (Literal 0 0) (-1)) splitList
-
-myMaxIndex :: Ord a => [a] -> Int
-myMaxIndex xs = head $ filter ((== maximum xs) . (xs !!)) [0..]
+-- myMax :: [Split] -> Split
+-- myMax splitList = foldr max (Split (Literal 0 0) (-1)) splitList
+ 
+-- myMaxIndex :: Ord a => [a] -> Int
+-- myMaxIndex xs = head $ filter ((== maximum xs) . (xs !!)) [0..]
 
 oneHotList :: Int -> Int -> [Double]
 oneHotList len idx =

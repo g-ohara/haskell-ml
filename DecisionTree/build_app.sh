@@ -1,4 +1,4 @@
-docker exec DT-stack bash -c "stack ghc -- CART.lhs -o haskell-CART && ./haskell-CART" && \
+docker exec DT-stack bash -c "stack ghc -- -Wall CART.lhs -o haskell-CART && ./haskell-CART" && \
 xhost +local:docker
 docker exec DT-graphviz dot -Tx11 output/tree.dot
 xhost -local:docker
