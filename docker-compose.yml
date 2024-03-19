@@ -1,0 +1,13 @@
+services:
+  haskell:
+    image: genjiohara/haskell
+    container_name: haskell-ml
+    volumes:
+      - ./:/root/workspace
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ~/.gitconfig:/root/.gitconfig
+      - ~/.ssh:/root/.ssh
+    environment:
+      - DISPLAY=$DISPLAY
+    working_dir: /root/workspace
+    tty: true
