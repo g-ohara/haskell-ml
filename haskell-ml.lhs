@@ -1,11 +1,16 @@
-\documentclass[11pt,openany]{book}
+\documentclass[12pt,openany]{book}
 \usepackage{a4wide}
 \usepackage{listings}
-% \usepackage{color}
+\usepackage{color}
 \usepackage{bm}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage[dvipdfmx]{graphicx}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{verbatim}
 
 \lstloadlanguages{Haskell}
 \lstnewenvironment{code}{}{}
@@ -23,18 +28,18 @@
   % {\ .}{{$\circ$}}2 {\ .\ }{{$\circ$}}2
   % {>>}{{>>}}2 {>>=}{{>>=}}2
   % {|}{{$\mid$}}1,
-  frame=single,
+  frame={tb},
   linewidth=40em,
   frameround=tttt, % makes four corners round
-  % keywordstyle={\color[rgb]{0,0,1}},
-  % stringstyle={\color[rgb]{0.6,0,0.6}},
-  % commentstyle={\color[rgb]{0,0.5,0}},
-  framesep=10pt,
+  keywordstyle={\color[rgb]{0,0,1}},
+  stringstyle={\color[rgb]{0.6,0,0.6}},
+  commentstyle={\color[rgb]{0,0.5,0}},
+  framesep=5pt,
   breaklines=true,
   columns=fixed,
-  numbers=none,
-  % xleftmargin=0zw,
+  xleftmargin=5pt,
   % xrightmargin=0zw,
+  numbers=left,
   numberstyle={\scriptsize},
   stepnumber=1,
   lineskip=0ex,
@@ -47,122 +52,368 @@
 \title{Haskell-ML}
 \author{Genji Ohara}
 \maketitle
+\tableofcontents
 
 \chapter{Introduction}
+\section{About This Book}
+This book is a collection of Haskell code for machine learning.
+This PDF file is generated from haskell-ml.lhs written in Literate Haskell format.
+You can compile it as both Haskell and \LaTeX{} source code.
+I write this book to learn Haskell and machine learning
+and hope it will be helpful for those who have the same interest.
 
-\section{Preamble}
+\section{Prerequisites}
+We use the following libraries:
+\begin{itemize}
+  \item \texttt{Prelude} for basic functions
+  \item \texttt{Numeric.LinearAlgebra} for matrix operations
+  \item \texttt{Data.CSV} for reading CSV files
+  \item \texttt{Text.ParserCombinators.Parsec} for parsing CSV files
+  \item \texttt{System.Random} for random number generation
+  \item \texttt{Data.List} for list operations
+\end{itemize}
 \begin{code}
-import Numeric.LinearAlgebra
 import Prelude hiding ((<>))
-import Data.List
-import Text.ParserCombinators.Parsec
+import Numeric.LinearAlgebra
 import Data.CSV
-
+import Text.ParserCombinators.Parsec
+import System.Random
+import Data.List
+\end{code}
+We use the following type aliases:
+\begin{itemize}
+  \item \texttt{R} for \texttt{Double}
+  \item \texttt{Vec} for \texttt{Vector R}
+  \item \texttt{Mat} for \texttt{Matrix R}
+\end{itemize}
+\begin{code}
 type Vec = Vector R
 type Mat = Matrix R
 \end{code}
-
-\section{Entry Point}
-\begin{code}
--- main :: IO()
--- main = do
---     dataSet <- readDataFromCSV "data/iris/iris.data"
---     let tree = growTree dataSet 0 10 "n"
---     let treeStr = show tree
---     putStrLn treeStr
---     writeFile "output/output-tree" treeStr
---     writeFile "output/tree.dot" $ treeToStringForGraphViz tree
-
-main :: IO ()
-main = do
-    cs1 <- readFile "dataset/train_data.dat"
-    cs2 <- readFile "dataset/test_data.dat"
-    cs3 <- readFile "dataset/train_label.dat"
-    cs4 <- readFile "dataset/test_label.dat"
-
-    let batchSize  = 100
-
-    let trainDataList   = map read $ lines cs1
-    let testDataList    = map read $ lines cs2
-    let trainLabelList  = map read $ lines cs3
-    let testLabelList   = map read $ lines cs4
-
-    weight <- flatten <$> randn 1 weight_size
-
-    let trainData   = matrix inputSize $ take (batchSize * inputSize) trainDataList
-    let testData    = matrix inputSize testDataList
-    let trainLabel  = oneHotMat outputSize $ take batchSize trainLabelList
-    let testLabel   = oneHotMat outputSize testLabelList
-
-    putStr "Now Loading Training Data...\n"
-    putStr "size of train data  : "
-    print $ size trainData
-    putStr "size of train label : "
-    print $ size trainLabel
-    putStr "size of test data   : "
-    print $ size testData
-    putStr "size of test label  : "
-    print $ size testLabel
-
-    -- putStr "Gradient Check      : "
-    -- print $ gradientCheck weight x t
-
-    let learningRate = 0.1
-    let iterNum = 100
-    let newW = learn weight trainData trainLabel learningRate iterNum
-
-    print $ testAccuracy newW trainData trainLabel
-    print $ testAccuracy newW testData testLabel
-\end{code}
-
-\chapter{Data Processing}
-\begin{code}
-type Feature    = [Double]
-type Label      = Int
-type DataSet    = [DataPoint]
-
-data DataPoint = DataPoint {
-    dFeature :: Feature,
-    dLabel   :: Label
-} deriving Show
-
-strLabelToIntLabel :: [String] -> [Int]
-strLabelToIntLabel strLabels = map (maybeToInt . labelToIndex) strLabels
-    where
-        labelToIndex l = findIndex (l ==) $ nub strLabels
-
-maybeToInt :: Maybe Int -> Int
-maybeToInt Nothing = 0
-maybeToInt (Just a) = a
-        
-processData :: [[String]] -> [DataPoint]
-processData rawData = concatDataPoint feature labs
-    where
-        feature = map ((map (read :: String -> Double)) . init) $ rawData
-        labs    = strLabelToIntLabel $ last $ transpose rawData
-
-concatDataPoint :: [[Double]] -> [Int] -> [DataPoint]
-concatDataPoint (f:fs) (l:ls) = DataPoint f l : concatDataPoint fs ls
-concatDataPoint [] _ = []
-concatDataPoint _ [] = []
-
-readDataFromCSV :: String -> IO DataSet
-readDataFromCSV fileName = do
-    rawData <- parseFromFile csvFile fileName
-    return $ either (\_ -> []) processData rawData 
-\end{code}
-
-\chapter{Decision Tree}
-
-\section{Data Type Definition}
+We define the some spaces as follows:
 \newcommand{\fspace}{\mathcal{F}}
 \newcommand{\lspace}{\mathcal{L}}
-\subsection{Data Space}
 \begin{align*}
    & \text{Feature Space} & \fspace     & =\mathbb{R}^D                 \\
    & \text{Label Space}   & \lspace     & =\left\{0,1,\dots,L-1\right\} \\
    & \text{Data Space}    & \mathcal{D} & =\fspace\times\lspace
 \end{align*}
+\begin{code}
+type Feature    = [Double]
+type Label      = Int
+data DataPoint = DataPoint {
+    dFeature :: Feature,
+    dLabel   :: Label
+} deriving Show
+data RegDataPoint = RegDataPoint {
+    rdFeature :: Feature,
+    rdLabel   :: Double
+} deriving Show
+\end{code}
+
+\section{Entry Point}
+You can test all methods in this book
+by compiling haskell-ml.lhs as a Haskell source code.
+\begin{code}
+main :: IO()
+main = do
+    testDT
+    testLinReg
+    testNN
+\end{code}
+
+\section{Data Processing}
+\subsection{Read Data}
+We need to read external datasets for input to models.
+\begin{code}
+type DataSet    = [DataPoint]
+type RegDataSet = [RegDataPoint]
+
+readClsDataFromCSV :: String -> IO DataSet
+readClsDataFromCSV fileName = do
+    rawData <- parseFromFile csvFile fileName
+    return $ either (\_ -> []) processClsData rawData 
+
+readRegDataFromCSV :: String -> IO RegDataSet
+readRegDataFromCSV fileName = do
+    rawData <- parseFromFile csvFile fileName
+    return $ either (\_ -> []) processRegData rawData
+\end{code}
+
+\subsection{Process Data}
+We need following steps to process data:
+\begin{figure}[h]
+  \centering
+  \begin{tikzpicture}
+    \node (raw) {\texttt{rawData}};
+    \node (rawfeature) [below left=.5cm of raw] {\texttt{rawFeat}};
+    \node (rawlabel) [below right=.5cm of raw] {\texttt{rawLabs}};
+    \node (feats) [below=.8cm of rawfeature] {\texttt{feats}};
+    \node (labs) [below=.8cm of rawlabel] {\texttt{labs}};
+    \node (data) [below=3cm of raw] {Processed Data};
+    \draw[->] (raw) -- node[above left] {\texttt{init}} (rawfeature);
+    \draw[->] (raw) -- node[above right] {\texttt{last.transpose}} (rawlabel);
+    \draw[->] (rawfeature) -- node[left] {\texttt{map (map read)}} (feats);
+    \draw[->] (rawlabel) -- node[right] {\texttt{strLabelToIntLabel}} (labs);
+    \draw[->] (feats) -- node[right=-.7cm] {\texttt{concatDataPoint}} (data);
+    \draw[->] (labs) -- (data);
+  \end{tikzpicture}
+\end{figure}
+\begin{code}
+processClsData :: [[String]] -> [DataPoint]
+processClsData rawData = concatClsDataPoint feats labs
+    where
+        rawLabs = (last . transpose) rawData
+        feats   = map (map (read :: String -> Double) . init) $ rawData
+        labs    = strLabelToIntLabel rawLabs
+
+processRegData :: [[String]] -> [RegDataPoint]
+processRegData rawData = concatRegDataPoint feats labs
+    where
+        rawLabs = (last . transpose) rawData
+        feats   = map (map (read :: String -> R) . init) $ rawData
+        labs    = map (read :: String -> R) rawLabs
+
+strLabelToIntLabel :: [String] -> [Int]
+strLabelToIntLabel strLabels = map (maybeToInt . labelToIndex) strLabels
+    where
+        labelToIndex l = findIndex (l ==) $ nub strLabels
+        maybeToInt Nothing = 0
+        maybeToInt (Just a) = a
+
+concatClsDataPoint :: [[Double]] -> [Int] -> [DataPoint]
+concatClsDataPoint (f:fs) (l:ls) = DataPoint f l : concatClsDataPoint fs ls
+concatClsDataPoint [] _ = []
+concatClsDataPoint _ [] = []
+
+concatRegDataPoint :: [[Double]] -> [Double] -> [RegDataPoint]
+concatRegDataPoint (f:fs) (l:ls) = RegDataPoint f l : concatRegDataPoint fs ls
+concatRegDataPoint [] _ = []
+concatRegDataPoint _ [] = []
+\end{code}
+
+\subsection{Split Data}
+We need to split the dataset into training and test datasets.
+\begin{code}
+splitDataset :: DataSet -> R -> (DataSet, DataSet)
+splitDataset dataSet rate = (trainData, testData)
+    where
+        trainData = take (round $ rate * fromIntegral (length dataSet)) dataSet
+        testData  = drop (round $ rate * fromIntegral (length dataSet)) dataSet
+
+splitRegDataset :: RegDataSet -> R -> (RegDataSet, RegDataSet)
+splitRegDataset dataSet rate = (trainData, testData)
+    where
+        trainData = take (round $ rate * fromIntegral (length dataSet)) dataSet
+        testData  = drop (round $ rate * fromIntegral (length dataSet)) dataSet
+\end{code}
+
+\section{Some Utilities}
+\begin{code}
+listToString :: [R] -> String
+listToString [] = ""
+listToString (r:rs) = show r ++ " " ++ listToString rs
+
+vecToString :: Vec -> String
+vecToString = listToString . toList
+
+vecsToString :: [Vec] -> String
+vecsToString [] = ""
+vecsToString (r:rs) = (vecToString r) ++ "\n" ++ (vecsToString rs)
+
+matToString :: Mat -> String
+matToString = vecsToString . toRows
+
+concatMatAndVec :: Mat -> Vec -> Mat
+concatMatAndVec x v = fromColumns $ toColumns x ++ [v]
+\end{code}
+
+\chapter{Linear Model}
+\section{Linear Regression}
+Linear regression is a very simple classifier.
+
+\subsection{Setting}
+Given a dataset $\mathcal{D}=\left\{(\bm{x}_1,y_1),(\bm{x}_2,y_2),\dots,(\bm{x}_N,y_N)\right\}$,
+where $\bm{x}_i\in\mathbb{R}^D$ is a feature vector and $y_i\in\{0,1\}$ is a label,
+\begin{equation}
+  \bm{X}\triangleq\begin{bmatrix}
+    \bm{x}_1^T \\
+    \bm{x}_2^T \\
+    \vdots     \\
+    \bm{x}_N^T
+  \end{bmatrix},\quad
+  \bm{y}\triangleq\begin{bmatrix}
+    y_1    \\
+    y_2    \\
+    \vdots \\
+    y_N
+  \end{bmatrix}
+\end{equation}
+
+\subsection{Model}
+We get the estimated label $\hat{y}$ from the feature vector $\bm{x}$ as follows:
+\begin{equation}
+  \hat{y}=\bm{w}^T\bm{x}+w_0\label{eq:linear}
+\end{equation}
+We transform \cref{eq:linear} by adding a bias term:
+\begin{equation}
+  \hat{y}=\bm{w}^T\bm{x}+w_0=\begin{bmatrix}w_0 & \bm{w}^T\end{bmatrix}\begin{bmatrix}1 \\ \bm{x}\end{bmatrix}=\tilde{\bm{w}}^T\tilde{\bm{x}}.
+\end{equation}
+\begin{code}
+predictLinReg :: Vec -> Vec -> R
+predictLinReg tw x = tw <.> (vector $ [1.0] ++ toList x)
+
+predictLinRegMat :: Vec -> Mat -> Vec
+predictLinRegMat tw x = fromList $ map (predictLinReg tw) $ toRows x
+\end{code}
+
+\subsection{Problem}
+We want to find the weight $\tilde{\bm{w}}$ that minimizes the objective:
+\begin{equation}
+  E(\tilde{\bm{w}})=\|\bm{y}-\tilde{\bm{X}}\tilde{\bm{w}}\|^2+\lambda\|\tilde{\bm{w}}\|^2.
+  \label{eq:linear-loss}
+\end{equation}
+where
+\begin{equation}
+  \tilde{\bm{X}}\triangleq\begin{bmatrix}
+    \tilde{\bm{x}}_1^T \\
+    \tilde{\bm{x}}_2^T \\
+    \vdots             \\
+    \tilde{\bm{x}}_N^T
+  \end{bmatrix}
+  =\begin{bmatrix}
+    \begin{matrix}
+      1      \\
+      1      \\
+      \vdots \\
+      1
+    \end{matrix} & \bm{X}
+  \end{bmatrix}
+\end{equation}
+\begin{code}
+addBias :: Mat -> Mat
+addBias x = fromColumns $ [bias] ++ (toColumns x)
+    where bias = vector $ take (rows x) [1,1..]
+\end{code}
+
+\subsection{Fitting}
+Gradient of the objective \cref{eq:linear-loss} is
+\begin{equation}
+  \nabla E(\tilde{\bm{w}})=2\left[\left(\tilde{\bm{X}}^T\tilde{\bm{X}}+\lambda I\right)
+    \tilde{\bm{w}}-\tilde{\bm{X}}^T\bm{y}\right].
+\end{equation}
+Therefore
+\begin{equation}
+  \underset{\tilde{\bm{w}}} {\operatorname{argmin}}\ E(\tilde{\bm{w}})=\left(
+  \tilde{\bm{X}}^T\tilde{\bm{X}}+\lambda I\right)^{-1}\tilde{\bm{X}}^T\bm{y}
+\end{equation}
+\begin{code}
+fit :: Mat -> Vec -> R -> Vec
+fit x_til y lambda = (inv a) #> ((tr x_til) #> y)
+  where a = (tr x_til) <> x_til + (scale lambda $ ident $ cols x_til)
+\end{code}
+
+\subsection{Test}
+We use iris dataset for testing.
+\begin{code}
+testLinReg :: IO()
+testLinReg = do
+    putStrLn "Linear Regression"
+    dataSet <- readRegDataFromCSV "data/housing.csv"
+    let splittedData = splitRegDataset dataSet 0.8
+    let trainData = fst splittedData
+    let testData = snd splittedData
+    let x = fromRows $ map (vector . rdFeature) trainData
+    let y = vector $ map rdLabel trainData
+    let x_til = addBias x
+    let w = fit x_til y 0.1
+    let x_test = fromRows $ map (vector . rdFeature) testData
+    let y_test = vector $ map rdLabel testData
+    let d_y = y_test - (predictLinRegMat w x_test)
+    let mse = (d_y <.> d_y) / (fromIntegral $ rows x_test)
+    print mse
+    writeFile "output/linreg.dat" $ show mse
+\end{code}
+Output:
+\verbatiminput{output/linreg.dat}
+
+\section{Logistic Regression}
+\subsection{Sigmoid}
+\begin{equation}
+  \sigma(x)=\frac{1}{1+e^{-x}}\label{eq:sigmoid}
+\end{equation}
+\begin{code}
+sigmoid :: R -> R
+sigmoid x = 1 / (1 + exp(-x))
+\end{code}
+
+\subsection{Prediction}
+\begin{equation}
+  \hat{y}=\sigma(\bm{w}^T\bm{x})\label{eq:logistic}
+\end{equation}
+\begin{code}
+predictLogReg :: Vec -> Vec -> R
+predictLogReg w x = sigmoid $ w <.> x
+\end{code}
+
+\subsection{Fitting}
+We minimize the objective:
+\begin{equation}
+  E(\bm{w})=-\sum_{i=1}^N\left[t_i\ln\hat{y}_i+(1-t_i)\ln(1-\hat{y}_i)\right]
+  +\frac{\lambda}{2}\|\bm{w}\|^2\label{eq:logistic-loss}
+\end{equation}
+Gradient:
+\begin{equation}
+  \nabla E(\bm{w})=\bm{X}^T(\hat{\bm{y}}-\bm{t})+\lambda\bm{w}\label{eq:logistic-grad}
+\end{equation}
+\begin{code}
+-- lossLogReg :: Vec -> Vec -> Vec -> R -> R
+-- lossLogReg w x t lambda = sumCrossEntropyError ys ts + lambda * (norm_2 w) ^ 2
+--     where
+--         ys = map (predictLogReg w) $ toRows x
+--         ts = toList t
+ 
+gradientLogReg :: Vec -> Mat -> Vec -> R -> Vec
+gradientLogReg w x t lambda = (tr x) #> (ys - t) + scale lambda w
+    where
+        ys = fromList $ map (predictLogReg w) $ toRows x
+\end{code}
+
+\subsection{Stochastic Gradient Descent}
+We update the weight as follows:
+\begin{equation}
+  \bm{w}\leftarrow\bm{w}-\eta\nabla E(\bm{w})\label{eq:sgd}
+\end{equation}
+By iterating \cref{eq:sgd}, we can minimize the objective \cref{eq:logistic-loss}.
+
+\begin{code}
+sgd :: Vec -> Mat -> Vec -> R -> R -> Vec
+sgd weight x t learningRate iterNum =
+    if iterNum == 0
+    then weight
+    else sgd new_w x t learningRate (iterNum - 1)
+    where
+    new_w = weight - (cmap (* learningRate) $ gradientLogReg weight x t 0.1)
+\end{code}
+
+\subsection{Test}
+% \begin{code}
+% testLogReg :: IO()
+% testLogReg = do
+%     print w
+%     writeFile "data/weight.dat" $ vecToString $ w
+%     writeFile "data/dataset.dat" $ matToString $ concatMatAndVec x y
+%         where
+%             gen     = mkStdGen 7
+%             x       = matrix 2 $ take (n * 2) $ randomRs (0, _scale) gen
+%             x_til   = addBias x
+%             y       = vector $ take n $ randomRs (0, 1) gen
+%             w       = sgd (vector [0.0, 0.0, 0.0]) x_til y 0.1 1000
+% \end{code}
+
+\chapter{Tree Model}
+\section{Decision Tree}
+
 
 \subsection{Constants}
 \begin{code}
@@ -207,7 +458,7 @@ data Tree = Leaf Int String | Node Literal Tree Tree String
 --             Node {literal :: Literal, left :: Tree, right :: Tree, id :: String}
 \end{code}
 
-\section{Output Tree}
+\subsection{Output Tree}
 \begin{code}
 instance Show Tree where
     show tree = treeToString tree 0
@@ -227,8 +478,8 @@ branchToString depth = "|" ++ (concat $ replicate depth "   |") ++ "--- "
 \end{code}
 \lstinputlisting[caption=Example of CLI output]{output/output-tree}
 
-\section{Gini Impurity}
-\subsection{Class Ratio}
+\subsection{Gini Impurity}
+\subsubsection{Class Ratio}
 \begin{align*}
    & \text{Label Set}   &                                                 & L=\left\{y\mid(\bm{x},y)\in D\right\}     \\[7pt]
    & \text{Label Count} &                                                 & c_l(L)=\sum_{i\in L}\mathbb{I}[i=l],\quad
@@ -245,7 +496,7 @@ classRatio labelList = scale (1 / (norm_1 countVec)) $ countVec
     where countVec = labelCount labelList
 \end{code}
 
-\subsection{Gini Impurity}
+\subsubsection{Gini Impurity}
 \begin{align*}
   % \mathrm{Gini}&:\lspace^n\to\mathbb{R} \\
   \mathrm{Gini}(L) & =1-\sum_{l=0}^{L-1}p_l(L)^2=1-\|\bm{p}(L)\|_2^2
@@ -255,8 +506,8 @@ gini :: [Label] -> Double
 gini labelList = 1.0 - (norm_2 $ classRatio labelList) ^ 2
 \end{code}
 
-\section{Search Best Split}
-\subsection{Split Data}
+\subsection{Search Best Split}
+\subsubsection{Split Data}
 \begin{align*}
   D_l(D,i,v) & =\left\{(\bm{x},y)\in D\mid x_i<v\right\}    \\
   D_r(D,i,v) & =\left\{(\bm{x},y)\in D\mid x_i\ge v\right\}
@@ -270,7 +521,7 @@ splitData dataSet (Literal i v) = [lData, rData]
         rData = [(DataPoint x y) | (DataPoint x y) <- dataSet, x !! i >  v]
 \end{code}
 
-\subsection{Score Splitted Data}
+\subsubsection{Score Splitted Data}
 \begin{align*}
   \mathrm{score}(D,i,v)=\frac{|D_l|}{|D|}\mathrm{gini}\left[D_l(D,i,v)\right]
   +\frac{|D_r|}{|D|}\mathrm{gini}\left[D_r(D,i,v)\right]
@@ -290,7 +541,7 @@ weightedGini wholeSize labelSet = (gini labelSet) * dblDataSize / dblWholeSize
     dblWholeSize    = fromIntegral wholeSize
 \end{code}
 
-\subsection{Search Best Split}
+\subsubsection{Search Best Split}
 \begin{align*}
   \underset{i,v}{\operatorname{argmin}}\operatorname{score}(D,i,v)
 \end{align*}
@@ -307,8 +558,8 @@ bestSplit dataSet = myMin splitList
     where splitList = [bestSplitAtFeature dataSet f | f <- [0,1..featureNum-1]]
 \end{code}
 
-\section{Grow Tree}
 \subsection{Grow Tree}
+\subsubsection{Grow Tree}
 \begin{code}
 growTree :: DataSet -> Int -> Int -> String -> Tree
 growTree dataSet depth maxDepth nodeId =
@@ -326,7 +577,7 @@ growTree dataSet depth maxDepth nodeId =
             length lData == 0 || length rData == 0
 \end{code}
 
-\subsection{Stop Growing}
+\subsubsection{Stop Growing}
 $$
   \operatorname{majorLabel}(D)=\underset{l\in\lspace}
   {\operatorname{argmax}}\sum_{(\bm{x},y)\in D}\mathbb{I}\left[y=l\right]
@@ -336,7 +587,7 @@ majorLabel :: DataSet -> Label
 majorLabel dataSet = maxIndex $ labelCount [y | (DataPoint _ y) <- dataSet]
 \end{code}
 
-\section{Output Tree in GraphViz}
+\subsection{Output Tree in GraphViz}
 \begin{code}
 labelToStringForGraphViz :: Tree -> String
 labelToStringForGraphViz (Leaf l leafId) =
@@ -361,8 +612,8 @@ treeToStringForGraphViz tree =
   \caption{Example of GraphViz output}
 \end{figure}
 
-\section{Other Functions}
-\subsection{Algorithm}
+\subsection{Other Functions}
+\subsubsection{Algorithm}
 \begin{code}
 myMin :: [Split] -> Split
 myMin splitList = foldr min (Split (Literal 0 0) 2) splitList
@@ -381,6 +632,18 @@ oneHotVector len idx = vector $ oneHotList len idx
 
 oneHotMat :: Int -> [Int] -> Mat
 oneHotMat len labelList = fromRows $ map (oneHotVector len) labelList
+\end{code}
+
+\subsection{Test}
+\begin{code}
+testDT :: IO()
+testDT = do
+    dataSet <- readClsDataFromCSV "data/iris/iris.data"
+    let tree = growTree dataSet 0 10 "n"
+    let treeStr = show tree
+    putStrLn treeStr
+    writeFile "output/output-tree" treeStr
+    writeFile "output/tree.dot" $ treeToStringForGraphViz tree
 \end{code}
 
 \chapter{Neural Network}
@@ -443,11 +706,7 @@ reluBackward dout x = dout * mask
 \end{code}
 
 \subsubsection{Sigmoid}
-$$ \mathrm{sigmoid}(x)=\frac{1}{1+e^{-x}} $$
-\begin{code}
-sigmoid :: R -> R
-sigmoid x = 1 / (1 + exp(-x))
-\end{code}
+See \cref{eq:sigmoid}.
 
 \subsection{Cross Entropy Error}
 \begin{align*}
@@ -590,5 +849,49 @@ learn weight x t learningRate iterNum =
 testAccuracy :: Vec -> Mat -> Mat -> R
 testAccuracy w x t = scoreSum / (fromIntegral $ rows x)
     where scoreSum = sumElements $ takeDiag $ (predict w x) <> (tr t)
+\end{code}
+
+\subsection{Test}
+\begin{code}
+testNN :: IO()
+testNN = do
+    cs1 <- readFile "dataset/train_data.dat"
+    cs2 <- readFile "dataset/test_data.dat"
+    cs3 <- readFile "dataset/train_label.dat"
+    cs4 <- readFile "dataset/test_label.dat"
+
+    let batchSize  = 100
+
+    let trainDataList   = map read $ lines cs1
+    let testDataList    = map read $ lines cs2
+    let trainLabelList  = map read $ lines cs3
+    let testLabelList   = map read $ lines cs4
+
+    weight <- flatten <$> randn 1 weight_size
+
+    let trainData   = matrix inputSize $ take (batchSize * inputSize) trainDataList
+    let testData    = matrix inputSize testDataList
+    let trainLabel  = oneHotMat outputSize $ take batchSize trainLabelList
+    let testLabel   = oneHotMat outputSize testLabelList
+
+    putStr "Now Loading Training Data...\n"
+    putStr "size of train data  : "
+    print $ size trainData
+    putStr "size of train label : "
+    print $ size trainLabel
+    putStr "size of test data   : "
+    print $ size testData
+    putStr "size of test label  : "
+    print $ size testLabel
+
+    -- putStr "Gradient Check      : "
+    -- print $ gradientCheck weight x t
+
+    let learningRate = 0.1
+    let iterNum = 100
+    let newW = learn weight trainData trainLabel learningRate iterNum
+
+    print $ testAccuracy newW trainData trainLabel
+    print $ testAccuracy newW testData testLabel
 \end{code}
 \end{document}
