@@ -1,6 +1,6 @@
 services:
-  haskell:
-    image: genjiohara/haskell
+  lhaskell:
+    image: genjiohara/lhaskell
     container_name: haskell-ml
     volumes:
       - ./:/root/workspace

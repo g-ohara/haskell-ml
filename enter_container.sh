@@ -2,5 +2,5 @@
 
 docker compose up -d
 xhost +local:
-docker compose exec haskell bash
+docker compose exec lhaskell bash
 xhost -local:

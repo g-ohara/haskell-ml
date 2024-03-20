@@ -1,0 +1,7 @@
+# Configuration for latexindent
+
+defaultIndent: "  "
+noIndentBlock:
+  code:
+    begin: '\\begin\{code\}'
+    end: '\\end\{code\}'
