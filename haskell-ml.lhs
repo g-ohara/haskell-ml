@@ -1,4 +1,4 @@
-\documentclass[11pt]{book}
+\documentclass[11pt,openany]{book}
 \usepackage{a4wide}
 \usepackage{listings}
 % \usepackage{color}
@@ -52,9 +52,11 @@
 
 \section{Preamble}
 \begin{code}
-import DataProcessing
 import Numeric.LinearAlgebra
 import Prelude hiding ((<>))
+import Data.List
+import Text.ParserCombinators.Parsec
+import Data.CSV
 
 type Vec = Vector R
 type Mat = Matrix R
@@ -111,7 +113,43 @@ main = do
 
     print $ testAccuracy newW trainData trainLabel
     print $ testAccuracy newW testData testLabel
+\end{code}
 
+\chapter{Data Processing}
+\begin{code}
+type Feature    = [Double]
+type Label      = Int
+type DataSet    = [DataPoint]
+
+data DataPoint = DataPoint {
+    dFeature :: Feature,
+    dLabel   :: Label
+} deriving Show
+
+strLabelToIntLabel :: [String] -> [Int]
+strLabelToIntLabel strLabels = map (maybeToInt . labelToIndex) strLabels
+    where
+        labelToIndex l = findIndex (l ==) $ nub strLabels
+
+maybeToInt :: Maybe Int -> Int
+maybeToInt Nothing = 0
+maybeToInt (Just a) = a
+        
+processData :: [[String]] -> [DataPoint]
+processData rawData = concatDataPoint feature labs
+    where
+        feature = map ((map (read :: String -> Double)) . init) $ rawData
+        labs    = strLabelToIntLabel $ last $ transpose rawData
+
+concatDataPoint :: [[Double]] -> [Int] -> [DataPoint]
+concatDataPoint (f:fs) (l:ls) = DataPoint f l : concatDataPoint fs ls
+concatDataPoint [] _ = []
+concatDataPoint _ [] = []
+
+readDataFromCSV :: String -> IO DataSet
+readDataFromCSV fileName = do
+    rawData <- parseFromFile csvFile fileName
+    return $ either (\_ -> []) processData rawData 
 \end{code}
 
 \chapter{Decision Tree}
