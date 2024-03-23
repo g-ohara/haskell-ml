@@ -27,6 +27,8 @@ cabal.project.local~
 
 ## TeX
 
+haskell-ml
+
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
