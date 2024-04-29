@@ -45,7 +45,8 @@
 \chapter{Introduction}
 \section{About This Book}
 This book is a collection of Haskell code for machine learning.
-This PDF file is generated from haskell-ml.lhs written in Literate Haskell format.
+This PDF file is generated from \verb|haskell-ml.lhs|
+written in Literate Haskell format.
 You can compile it as both Haskell and \LaTeX{} source code.
 I write this book to learn Haskell and machine learning
 and hope it will be helpful for those who have the same interest.
@@ -54,25 +55,24 @@ and hope it will be helpful for those who have the same interest.
 We use the following libraries:
 \begin{itemize}
   \item \texttt{Prelude} for basic functions
-  \item \texttt{Numeric.LinearAlgebra} for matrix operations
-  \item \texttt{Data.CSV} for reading CSV files
-  \item \texttt{Text.ParserCombinators.Parsec} for parsing CSV files
-  \item \texttt{System.Random} for random number generation
+  \item \texttt{Data.CSV} and \texttt{Text.ParserCombinators.Parsec} for reading CSV files
   \item \texttt{Data.List} for list operations
+  \item \texttt{Numeric.LinearAlgebra} for matrix operations
+  \item \texttt{System.Random} and \texttt{List.Shuffle} for randomization
+  \item \texttt{Text.Printf} for formatted output
 \end{itemize}
 \begin{code}
 import Prelude hiding ((<>))
-import Numeric.LinearAlgebra
 import Data.CSV
 import Text.ParserCombinators.Parsec
+import Data.List
+import Numeric.LinearAlgebra
 import System.Random
 import List.Shuffle
-import Data.List
 import Text.Printf
 \end{code}
 We use the following type aliases:
 \begin{itemize}
-  \item \texttt{R} for \texttt{Double}
   \item \texttt{Vec} for \texttt{Vector R}
   \item \texttt{Mat} for \texttt{Matrix R}
 \end{itemize}
@@ -91,6 +91,7 @@ We define the some spaces as follows:
 \begin{code}
 type Feature    = [Double]
 type Label      = Int
+
 data DataPoint = DataPoint {
     dFeature :: Feature,
     dLabel   :: Label
@@ -101,7 +102,7 @@ data RegDataPoint = RegDataPoint {
 } deriving Show
 \end{code}
 You can test all methods in this book
-by compiling haskell-ml.lhs as a Haskell source code.
+by compiling \verb|haskell-ml.lhs| as a Haskell source code.
 \begin{code}
 main :: IO()
 main = do
