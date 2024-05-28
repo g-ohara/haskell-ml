@@ -1,4 +1,5 @@
 \documentclass[12pt,openany]{book}
+
 \usepackage{a4wide}
 \usepackage{listings}
 \usepackage{color}
@@ -14,25 +15,24 @@
 
 \lstloadlanguages{Haskell}
 \lstnewenvironment{code}{}{}
-\lstset
-{%
-  language=Haskell,
-  basicstyle=\small\ttfamily,
-  flexiblecolumns=false,
-  basewidth={0.5em,0.45em},
-  frame={tb},
-  linewidth=40em,
-  frameround=tttt, % makes four corners round
-  keywordstyle={\color[rgb]{0,0,1}},
-  stringstyle={\color[rgb]{0.6,0,0.6}},
-  commentstyle={\color[rgb]{0,0.5,0}},
-  framesep=7pt,
-  breaklines=true,
-  columns=fixed,
-  xleftmargin=5pt,
-  lineskip=0ex,
-  tabsize=4,
-  escapeinside={(@}{@)}
+\lstset{%
+language=Haskell,
+basicstyle=\small\ttfamily,
+flexiblecolumns=false,
+basewidth={0.5em,0.45em},
+frame={tb},
+linewidth=40em,
+frameround=tttt, % makes four corners round
+keywordstyle={\color[rgb]{0,0,1}},
+stringstyle={\color[rgb]{0.6,0,0.6}},
+commentstyle={\color[rgb]{0,0.5,0}},
+framesep=7pt,
+breaklines=true,
+columns=fixed,
+xleftmargin=5pt,
+lineskip=0ex,
+tabsize=4,
+% escapeinside={(@}{@)}
 }
 
 \begin{document}
@@ -44,7 +44,7 @@
 
 \chapter{Introduction}
 \section{About This Book}
-This book is a collection of Haskell code for machine learning.
+This book is a collection of Haskell code for machine learning!
 This PDF file is generated from \verb|haskell-ml.lhs|
 written in Literate Haskell format.
 You can compile it as both Haskell and \LaTeX{} source code.
@@ -95,19 +95,19 @@ type Label      = Int
 data DataPoint = DataPoint {
     dFeature :: Feature,
     dLabel   :: Label
-} deriving Show
+  } deriving Show
 data RegDataPoint = RegDataPoint {
     rdFeature :: Feature,
     rdLabel   :: Double
-} deriving Show
+  } deriving Show
 \end{code}
 You can test all methods in this book
 by compiling \verb|haskell-ml.lhs| as a Haskell source code.
 \begin{code}
 main :: IO()
 main = do
-    testCls
-    testReg
+  testCls
+  testReg
 \end{code}
 
 \section{Data Processing}
@@ -119,13 +119,13 @@ type RegDataSet = [RegDataPoint]
 
 readClsDataFromCSV :: String -> IO DataSet
 readClsDataFromCSV fileName = do
-    rawData <- parseFromFile csvFile fileName
-    return $ either (const []) processClsData rawData 
+  rawData <- parseFromFile csvFile fileName
+  return $ either (const []) processClsData rawData
 
 readRegDataFromCSV :: String -> IO RegDataSet
 readRegDataFromCSV fileName = do
-    rawData <- parseFromFile csvFile fileName
-    return $ either (const []) processRegData rawData
+  rawData <- parseFromFile csvFile fileName
+  return $ either (const []) processRegData rawData
 \end{code}
 
 \subsection{Process Data}
@@ -150,24 +150,24 @@ We need following steps to process data:
 \begin{code}
 processClsData :: [[String]] -> [DataPoint]
 processClsData rawData = concatClsDataPoint feats labs
-    where
-        rawLabs = (last . transpose) rawData
-        feats   = map (map (read :: String -> Double) . init) rawData
-        labs    = strLabelToIntLabel rawLabs
+  where
+    rawLabs = (last . transpose) rawData
+    feats   = map (map (read :: String -> Double) . init) rawData
+    labs    = strLabelToIntLabel rawLabs
 
 processRegData :: [[String]] -> [RegDataPoint]
 processRegData rawData = concatRegDataPoint feats labs
-    where
-        rawLabs = (last . transpose) rawData
-        feats   = map (map (read :: String -> R) . init) rawData
-        labs    = map (read :: String -> R) rawLabs
+  where
+    rawLabs = (last . transpose) rawData
+    feats   = map (map (read :: String -> R) . init) rawData
+    labs    = map (read :: String -> R) rawLabs
 
 strLabelToIntLabel :: [String] -> [Int]
 strLabelToIntLabel strLabels = map (maybeToInt . labelToIndex) strLabels
-    where
-        labelToIndex l = elemIndex l $ nub strLabels
-        maybeToInt Nothing = 0
-        maybeToInt (Just a) = a
+  where
+    labelToIndex l = elemIndex l $ nub strLabels
+    maybeToInt Nothing = 0
+    maybeToInt (Just a) = a
 
 concatClsDataPoint :: [[Double]] -> [Int] -> [DataPoint]
 concatClsDataPoint (f:fs) (l:ls) = DataPoint f l : concatClsDataPoint fs ls
@@ -185,10 +185,10 @@ We need to split the dataset into training and test datasets.
 \begin{code}
 splitDataset :: [a] -> R -> StdGen -> ([a], [a])
 splitDataset dataSet rate gen = (trainData, testData)
-    where
-        shuffledData = fst $ shuffle dataSet gen
-        trainData = take (round $ rate * fromIntegral (length shuffledData)) shuffledData
-        testData  = drop (round $ rate * fromIntegral (length shuffledData)) shuffledData
+  where
+    shuffledData = fst $ shuffle dataSet gen
+    trainData = take (round $ rate * fromIntegral (length shuffledData)) shuffledData
+    testData  = drop (round $ rate * fromIntegral (length shuffledData)) shuffledData
 \end{code}
 
 \chapter{Linear Model}
@@ -202,7 +202,7 @@ In this chapter, we introduce linear models below:
 \end{itemize}
 
 
-\section{Linear Regression} \label{sec:linear-regression}
+\section{Linear Regression}
 Linear regression is a very simple regressor.
 
 \subsection{Setting}
@@ -266,7 +266,7 @@ where
 \begin{code}
 addBias :: Mat -> Mat
 addBias x = fromColumns $ bias : toColumns x
-    where bias = vector $ take (rows x) [1,1..]
+  where bias = vector $ take (rows x) [1,1..]
 \end{code}
 
 \subsection{Fitting}
@@ -277,21 +277,21 @@ Gradient of the objective \cref{eq:linear-loss} is
 \end{equation}
 Therefore
 \begin{equation}
-  \underset{\tilde{\bm{w}}} {\operatorname{argmin}}\ E(\tilde{\bm{w}})=\left(
-  \tilde{\bm{X}}^T\tilde{\bm{X}}+\lambda I\right)^{-1}\tilde{\bm{X}}^T\bm{y}
+  \underset{\tilde{\bm{w}}} {\operatorname{argmin}}\ E(\tilde{\bm{w}})={\left(
+  \tilde{\bm{X}}^T\tilde{\bm{X}}+\lambda I\right)}^{-1}\tilde{\bm{X}}^T\bm{y}
 \end{equation}
 \begin{code}
 fitLinReg :: Mat -> Vec -> R -> Vec
 fitLinReg x y lambda = inv a #> (tr x_til #> y)
-    where
-        a = tr x_til <> x_til + scale lambda (ident $ cols x_til)
-        x_til = addBias x
+  where
+    a = tr x_til <> x_til + scale lambda (ident $ cols x_til)
+    x_til = addBias x
 \end{code}
 
-\section{Logistic Regression} \label{sec:logistic-regression}
+\section{Logistic Regression}
 \subsection{Model}
 \begin{equation}
-  \hat{y}=\sigma(\bm{w}^T\bm{x})\label{eq:logistic},
+  \hat{y}=\sigma(\bm{w}^T\bm{x}),
 \end{equation}
 where $\sigma$ is the sigmoid function:
 \begin{equation}
@@ -323,13 +323,13 @@ We minimize the objective:
 \end{equation}
 Gradient:
 \begin{equation}
-  \nabla E(\bm{w})=\bm{X}^T(\hat{\bm{y}}-\bm{t})+\lambda\bm{w}\label{eq:logistic-grad}
+  \nabla E(\bm{w})=\bm{X}^T(\hat{\bm{y}}-\bm{t})+\lambda\bm{w}
 \end{equation}
 \begin{code}
 gradientLogReg :: Vec -> Mat -> Vec -> R -> Vec
 gradientLogReg w x t lambda = tr x #> (ys - t) + scale lambda w
-    where
-        ys = predictProbLogReg w x
+  where
+    ys = predictProbLogReg w x
 \end{code}
 
 \subsection{Fitting}
@@ -343,17 +343,17 @@ By iterating \cref{eq:sgd}, we can minimize the objective \cref{eq:logistic-loss
 \begin{code}
 sgd :: Vec -> Mat -> Vec -> R -> R -> Vec
 sgd weight x t learningRate iterNum =
-    if iterNum == 0
-    then weight
-    else sgd new_w x t learningRate (iterNum - 1)
-    where
+  if iterNum == 0
+  then weight
+  else sgd new_w x t learningRate (iterNum - 1)
+  where
     new_w = weight - cmap (* learningRate) (gradientLogReg weight x t 0.1)
 \end{code}
 
-\section{Support Vector Machine (SVM)} \label{sec:support-vector-machine}
+\section{Support Vector Machine (SVM)}
 \subsection{Model}
 \begin{equation}
-  \hat{y}=\operatorname{sign}(\bm{w}^T\bm{x}+w_0)\label{eq:svm}
+  \hat{y}=\operatorname{sign}(\bm{w}^T\bm{x}+w_0)
 \end{equation}
 where
 \begin{equation}
@@ -374,7 +374,7 @@ predictSVM w x = fromList $ map (predictOneSVM w) $ toRows x
 \subsection{Problem}
 We minimize the objective:
 \begin{equation}
-  E(\bm{w})=\frac{1}{2}\|\bm{w}\|^2+C\sum_{i=1}^N\xi_i\label{eq:svm-loss}
+  E(\bm{w})=\frac{1}{2}\|\bm{w}\|^2+C\sum_{i=1}^N\xi_i
 \end{equation}
 subject to
 \begin{align}
@@ -385,48 +385,49 @@ subject to
 \subsection{Fitting}
 We can solve the problem by using the Lagrange dual problem.
 \begin{equation}
-  \max_{\bm{\alpha}}\sum_{i=1}^N\alpha_i-\frac{1}{2}\sum_{i=1}^N\sum_{j=1}^N\alpha_i\alpha_jt_it_j\bm{x}_i^T\bm{x}_j
+  \max_{\bm{\alpha}}\sum_{i=1}^N\alpha_i-\frac{1}{2}\sum_{i=1}^N\sum_{j=1}^N
+  \alpha_i\alpha_{j}t_{i}t_{j}\bm{x}_i^T\bm{x}_j
 \end{equation}
 subject to
 \begin{align}
    & 0\le\alpha_i\le C,\quad i=1,\dots,N, \\
-   & \sum_{i=1}^N\alpha_it_i=0.
+   & \sum_{i=1}^N\alpha_{i}t_i=0.
 \end{align}
 \begin{code}
-fitSVM :: Mat -> Vec -> R -> R -> Vec
-fitSVM x t c lambda = inv a #> (tr x #> t)
-    where
-        a = tr x <> x + scale lambda (ident $ cols x)
+fitSVM :: Mat -> Vec -> R -> Vec
+fitSVM x t lambda = inv a #> (tr x #> t)
+  where
+    a = tr x <> x + scale lambda (ident $ cols x)
 \end{code}
 
 % \subsection{Kernel Trick}
 % We can use the kernel trick to solve the problem in a high-dimensional space.
 % \begin{equation}
-%   \hat{y}=\operatorname{sign}\left(\sum_{i=1}^N\alpha_it_iK(\bm{x}_i,\bm{x})+w_0\right),
+%   \hat{y}=\operatorname{sign}\left(\sum_{i=1}^N\alpha_{i}t_{i}K(\bm{x}_i,\bm{x})+w_0\right),
 % \end{equation}
 % where $K(\bm{x},\bm{x}')$ is kernel function.
 % \begin{code}
 % fitSVMKernel :: Mat -> Vec -> R -> R -> Vec
 % fitSVMKernel x t c lambda = inv a #> t
-%     where
-%         a = tr k <> k + scale lambda (ident $ cols k)
-%         k = kernel x
+%   where
+%     a = tr k <> k + scale lambda (ident $ cols k)
+%     k = kernel x
 % \end{code}
 % Kernel functions are as follows:
 % \begin{itemize}
 %   \item Linear kernel: $K(\bm{x},\bm{x}')=\bm{x}^T\bm{x}'$
-%   \item Polynomial kernel: $K(\bm{x},\bm{x}')=(\bm{x}^T\bm{x}'+1)^d$
+%   \item Polynomial kernel: $K(\bm{x},\bm{x}')={(\bm{x}^T\bm{x}'+1)}^d$
 %   \item Gaussian kernel: $K(\bm{x},\bm{x}')=\exp\left(-\frac{\|\bm{x}-\bm{x}'\|^2}{2\sigma^2}\right)$
 % \end{itemize}
-% When we use Linear kernel, it is the equivalent to the original SVM.
+% When we use Linear kernel, it is the equivalent to the original SVM\@.
 
-\begin{code}
-polynomialKernel :: Int -> Vec -> Vec -> R
-polynomialKernel d x x' = (1 + (x <.> x')) ^ d
-
-gaussianKernel :: R -> Vec -> Vec -> R
-gaussianKernel sigma x x' = exp $ (-1) * (norm_2 $ x - x') ^ 2 / (2 * sigma ^ 2)
-\end{code}
+% \begin{code}
+% polynomialKernel :: Int -> Vec -> Vec -> R
+% polynomialKernel d x x' = (1 + (x <.> x')) ^ d
+% 
+% gaussianKernel :: R -> Vec -> Vec -> R
+% gaussianKernel sigma x x' = exp $ (-1) * (norm_2 $ x - x') ^ 2 / (2 * sigma ^ 2)
+% \end{code}
 
 
 \chapter{Tree Model}
@@ -448,21 +449,21 @@ labelNum = 3
 data Literal = Literal Int Double
 
 instance Show Literal where
-    show (Literal i v) = "Feature[" ++ show i ++ "] < " ++ show v
+  show (Literal i v) = "Feature[" ++ show i ++ "] < " ++ show v
 \end{code}
 
 \subsubsection{Split}
 \begin{code}
 data Split = Split {
-    sLiteral :: Literal,
-    sScore :: Double
-  } deriving Show
+  sLiteral :: Literal,
+  sScore :: Double
+} deriving Show
 
 instance Eq Split where
-    (Split _ s) == (Split _ s') = s == s'
+  (Split _ s) == (Split _ s') = s == s'
 
 instance Ord Split where
-    compare (Split _ s) (Split _ s') = compare s s'
+  compare (Split _ s) (Split _ s') = compare s s'
 \end{code}
 
 \subsubsection{Tree}
@@ -477,12 +478,12 @@ data Tree = Leaf Int String | Node Literal Tree Tree String
 predictTree :: Tree -> Feature -> Int
 predictTree (Leaf l _) _ = l
 predictTree (Node (Literal i v) left right _) x =
-    if x !! i <= v
-    then predictTree left x
-    else predictTree right x
+  if x !! i <= v
+  then predictTree left x
+  else predictTree right x
 
 predictDT :: Tree -> Mat -> Vector Int
-predictDT tree x = fromList $ map ((predictTree tree) . toList) $ toRows x
+predictDT tree x = fromList $ map (predictTree tree . toList) $ toRows x
 \end{code}
 
 
@@ -497,21 +498,21 @@ predictDT tree x = fromList $ map ((predictTree tree) . toList) $ toRows x
 \end{align}
 \begin{code}
 labelCount :: [Label] -> Vec
-labelCount = sum . (map $ oneHotVector labelNum)
+labelCount = sum . map (oneHotVector labelNum)
 
 classRatio :: [Label] -> Vec
-classRatio labelList = scale (1 / (norm_1 countVec)) $ countVec
-    where countVec = labelCount labelList
+classRatio labelList = scale (1 / norm_1 countVec) countVec
+  where countVec = labelCount labelList
 \end{code}
 
 \subsubsection{Gini Impurity}
 \begin{align}
   % \mathrm{Gini}&:\lspace^n\to\mathbb{R} \\
-  \mathrm{Gini}(L) & =1-\sum_{l=0}^{L-1}p_l(L)^2=1-\|\bm{p}(L)\|_2^2
+  \mathrm{Gini}(L) & =1-\sum_{l=0}^{L-1}{p_l(L)}^2=1-\|\bm{p}(L)\|_2^2
 \end{align}
 \begin{code}
 gini :: [Label] -> Double
-gini labelList = 1.0 - (norm_2 $ classRatio labelList) ^ 2
+gini labelList = 1.0 - norm_2 (classRatio labelList) ** 2
 \end{code}
 
 \subsection{Search Best Split}
@@ -522,11 +523,11 @@ gini labelList = 1.0 - (norm_2 $ classRatio labelList) ^ 2
 \end{align}
 
 \begin{code}
-splitData :: DataSet -> Literal -> [DataSet]
-splitData dataSet (Literal i v) = [lData, rData]
-    where
-        lData = [(DataPoint x y) | (DataPoint x y) <- dataSet, x !! i <= v]
-        rData = [(DataPoint x y) | (DataPoint x y) <- dataSet, x !! i >  v]
+splitData :: DataSet -> Literal -> (DataSet, DataSet)
+splitData dataSet (Literal i v) = (lData, rData)
+  where
+    lData = [DataPoint x y | (DataPoint x y) <- dataSet, x !! i <= v]
+    rData = [DataPoint x y | (DataPoint x y) <- dataSet, x !! i >  v]
 \end{code}
 
 \subsubsection{Score Splitted Data}
@@ -538,12 +539,14 @@ splitData dataSet (Literal i v) = [lData, rData]
 \begin{code}
 scoreLiteral :: DataSet -> Literal -> Split
 scoreLiteral dataSet literal = Split literal score
-    where
-        score = sum $ map (weightedGini (length dataSet)) $ labelSet
-        labelSet = map (map dLabel) $ splitData dataSet literal
+  where
+    score = sum $ both (weightedGini (length dataSet)) labelSet
+    labelSet = both (map dLabel) $ splitData dataSet literal
+    both :: (a -> b) -> (a,a) -> (b,b)
+    both f (x,y) = (f x, f y)
 
 weightedGini :: Int -> [Label] -> Double
-weightedGini wholeSize labelSet = (gini labelSet) * dblDataSize / dblWholeSize
+weightedGini wholeSize labelSet = gini labelSet * dblDataSize / dblWholeSize
   where
     dblDataSize     = fromIntegral $ length labelSet
     dblWholeSize    = fromIntegral wholeSize
@@ -557,13 +560,13 @@ weightedGini wholeSize labelSet = (gini labelSet) * dblDataSize / dblWholeSize
 \begin{code}
 bestSplitAtFeature :: DataSet -> Int -> Split
 bestSplitAtFeature dataSet i = myMin splitList
-    where
-        splitList   = [scoreLiteral dataSet l | l <- literalList]
-        literalList = [Literal i (x !! i) | (DataPoint x _) <- dataSet]
+  where
+    splitList   = [scoreLiteral dataSet l | l <- literalList]
+    literalList = [Literal i (x !! i) | (DataPoint x _) <- dataSet]
 
 bestSplit :: DataSet -> Split
 bestSplit dataSet = myMin splitList
-    where splitList = [bestSplitAtFeature dataSet f | f <- [0,1..featureNum-1]]
+  where splitList = [bestSplitAtFeature dataSet f | f <- [0,1..featureNum-1]]
 \end{code}
 
 \subsection{Grow Tree}
@@ -571,25 +574,25 @@ bestSplit dataSet = myMin splitList
 \begin{code}
 growTree :: DataSet -> Int -> Int -> String -> Tree
 growTree dataSet depth maxDepth nodeId =
-    if stopGrowing
-    then Leaf (majorLabel dataSet) nodeId
-    else Node literal leftTree rightTree nodeId
-    where
-        literal         = sLiteral $ bestSplit dataSet
-        leftTree        = growTree lData (depth + 1) maxDepth (nodeId ++ "l")
-        rightTree       = growTree rData (depth + 1) maxDepth (nodeId ++ "r")
-        [lData, rData]  = splitData dataSet literal
-        stopGrowing =
-            depth == maxDepth ||
-            gini [y | (DataPoint _ y) <- dataSet] == 0 ||
-            length lData == 0 || length rData == 0
+  if stopGrowing
+  then Leaf (majorLabel dataSet) nodeId
+  else Node literal leftTree rightTree nodeId
+  where
+    literal         = sLiteral $ bestSplit dataSet
+    leftTree        = growTree lData (depth + 1) maxDepth (nodeId ++ "l")
+    rightTree       = growTree rData (depth + 1) maxDepth (nodeId ++ "r")
+    (lData, rData)  = splitData dataSet literal
+    stopGrowing =
+      depth == maxDepth ||
+      gini [y | (DataPoint _ y) <- dataSet] == 0 ||
+      null lData || null rData
 \end{code}
 
 \subsubsection{Stop Growing}
-$$
+\begin{equation*}
   \operatorname{majorLabel}(D)=\underset{l\in\lspace}
   {\operatorname{argmax}}\sum_{(\bm{x},y)\in D}\mathbb{I}\left[y=l\right]
-$$
+\end{equation*}
 \begin{code}
 majorLabel :: DataSet -> Label
 majorLabel dataSet = maxIndex $ labelCount [y | (DataPoint _ y) <- dataSet]
@@ -600,18 +603,18 @@ majorLabel dataSet = maxIndex $ labelCount [y | (DataPoint _ y) <- dataSet]
 \subsubsection{For CLI}
 \begin{code}
 instance Show Tree where
-    show tree = treeToString tree 0
+  show tree = treeToString tree 0
 
 treeToString :: Tree -> Int -> String
 treeToString (Leaf l _) depth =
-    branchToString depth ++ "class: " ++ show l ++ "\n"
+  branchToString depth ++ "class: " ++ show l ++ "\n"
 treeToString (Node literal leftTree rightTree _) depth =
-    let str1 = branchToString depth ++ show literal ++ "\n"
-        str2 = treeToString leftTree (depth + 1)
-        str3 = branchToString depth ++ "!" ++ show literal ++ "\n"
-        str4 = treeToString rightTree $ depth + 1
-    in str1 ++ str2 ++ str3 ++ str4
-  
+  let str1 = branchToString depth ++ show literal ++ "\n"
+      str2 = treeToString leftTree (depth + 1)
+      str3 = branchToString depth ++ "!" ++ show literal ++ "\n"
+      str4 = treeToString rightTree $ depth + 1
+  in str1 ++ str2 ++ str3 ++ str4
+
 branchToString :: Int -> String
 branchToString depth = "|" ++ concat (replicate depth "   |") ++ "--- "
 \end{code}
@@ -619,22 +622,22 @@ branchToString depth = "|" ++ concat (replicate depth "   |") ++ "--- "
 
 \subsubsection{For GraphViz}
 \begin{code}
-labelToStringForGraphViz :: Tree -> String
-labelToStringForGraphViz (Leaf l leafId) =
-    leafId ++ " [label=\"Class: " ++ (show l) ++ "\"]\n"
-labelToStringForGraphViz (Node (Literal i v) left right nodeId) =
-    nodeId ++ " [shape=box,label=\"Feature[" ++ (show i) ++ "] < " ++ (show v) ++ "\"]\n" ++
-    labelToStringForGraphViz left ++ labelToStringForGraphViz right
+-- labelToStringForGraphViz :: Tree -> String
+-- labelToStringForGraphViz (Leaf l leafId) =
+--   leafId ++ " [label=\"Class: " ++ show l ++ "\"]\n"
+-- labelToStringForGraphViz (Node (Literal i v) left right nodeId) =
+--   nodeId ++ " [shape=box,label=\"Feature[" ++ show i ++ "] < " ++ show v ++ "\"]\n" ++
+--   labelToStringForGraphViz left ++ labelToStringForGraphViz right
 
-nodeToStringForGraphViz :: Tree -> String
-nodeToStringForGraphViz (Leaf _ leafId) = leafId ++ ";\n"
-nodeToStringForGraphViz (Node _ left right nodeId) =
-    nodeId ++ " -- " ++ nodeToStringForGraphViz left ++
-    nodeId ++ " -- " ++ nodeToStringForGraphViz right
+-- nodeToStringForGraphViz :: Tree -> String
+-- nodeToStringForGraphViz (Leaf _ leafId) = leafId ++ ";\n"
+-- nodeToStringForGraphViz (Node _ left right nodeId) =
+--   nodeId ++ " -- " ++ nodeToStringForGraphViz left ++
+--   nodeId ++ " -- " ++ nodeToStringForGraphViz right
 
-treeToStringForGraphViz :: Tree -> String
-treeToStringForGraphViz tree =
-    "graph Tree {\n" ++ labelToStringForGraphViz tree ++ nodeToStringForGraphViz tree ++ "}"
+-- treeToStringForGraphViz :: Tree -> String
+-- treeToStringForGraphViz tree =
+--   "graph Tree {\n" ++ labelToStringForGraphViz tree ++ nodeToStringForGraphViz tree ++ "}"
 \end{code}
 \begin{figure}[htbp]
   \centering
@@ -646,16 +649,13 @@ treeToStringForGraphViz tree =
 \subsubsection{Algorithm}
 \begin{code}
 myMin :: [Split] -> Split
-myMin splitList = foldr min (Split (Literal 0 0) 2) splitList
+myMin = foldr min (Split (Literal 0 0) 2)
 
 oneHotList :: Int -> Int -> [R]
-oneHotList len idx =
-    if len == 0
-    then []
-    else
-    if idx == 0
-    then 1 : oneHotList (len - 1) (idx - 1)
-    else 0 : oneHotList (len - 1) (idx - 1)
+oneHotList len idx
+  | len == 0 = []
+  | idx == 0 = 1 : oneHotList (len - 1) (idx - 1)
+  | otherwise = 0 : oneHotList (len - 1) (idx - 1)
 
 oneHotVector :: Int -> Int -> Vec
 oneHotVector len idx = vector $ oneHotList len idx
@@ -680,13 +680,13 @@ w1_size     :: Int
 w2_start    :: Int
 w2_size     :: Int
 b2_start    :: Int
-weight_size :: Int
+weightSize :: Int
 w1_start    = 0
 w1_size     = inputSize * hiddenSize
 w2_start    = w1_size + hiddenSize
 w2_size     = hiddenSize * outputSize
 b2_start    = w2_start + w2_size
-weight_size = w1_size + hiddenSize + w2_size + outputSize
+weightSize = w1_size + hiddenSize + w2_size + outputSize
 \end{code}
 
 \section{Layers}
@@ -697,10 +697,10 @@ affine :: Mat -> Vec -> Mat -> Mat
 affine w b x = x <> w + asRow b
 
 affineDX :: Mat -> Mat -> Mat
-affineDX w dout = dout <> (tr w)
+affineDX w dout = dout <> tr w
 
 affineDW :: Mat -> Mat -> [R]
-affineDW x dout = (matToList $ (tr x) <> dout) ++ (toList $ sum $ toRows dout)
+affineDW x dout = matToList (tr x <> dout) ++ toList (sum $ toRows dout)
 \end{code}
 
 \subsection{Activation Function}
@@ -720,7 +720,7 @@ relu = cmap (max 0)
 
 reluBackward :: Mat -> Mat -> Mat
 reluBackward dout x = dout * mask
-    where mask = cmap (\_x -> if _x > 0 then 1 else 0) x
+  where mask = cmap (\_x -> if _x > 0 then 1 else 0) x
 \end{code}
 
 \subsubsection{Sigmoid}
@@ -733,17 +733,17 @@ See \cref{eq:sigmoid}.
   \mathrm{CEE}(Y,T)           & =\sum_{i=1}^N\mathrm{CEE}(\bm{y}_i,\bm{t}_i)
 \end{align}
 \begin{code}
-sumCrossEntropyError :: [Vec] -> [Vec] -> R
-sumCrossEntropyError [] _ = 0
-sumCrossEntropyError _ [] = 0
-sumCrossEntropyError (y:ys) (t:ts) = -t <.> (cmap log y) + sumCrossEntropyError ys ts
+-- sumCrossEntropyError :: [Vec] -> [Vec] -> R
+-- sumCrossEntropyError [] _ = 0
+-- sumCrossEntropyError _ [] = 0
+-- sumCrossEntropyError (y:ys) (t:ts) = -(t <.> cmap log y) + sumCrossEntropyError ys ts
 
-crossEntropyError :: Mat -> Mat -> R
-crossEntropyError y t = sumCrossEntropyError ys ts / batchSize
-    where
-        ys = toRows y
-        ts = toRows t
-        batchSize = fromIntegral $ length ys
+-- crossEntropyError :: Mat -> Mat -> R
+-- crossEntropyError y t = sumCrossEntropyError ys ts / batchSize
+--   where
+--   ys = toRows y
+--   ts = toRows t
+--   batchSize = fromIntegral $ length ys
 \end{code}
 \subsection{Softmax}
 \subsubsection{Softmax}
@@ -757,22 +757,22 @@ crossEntropyError y t = sumCrossEntropyError ys ts / batchSize
 \begin{code}
 softmaxVec :: Vec -> Vec
 softmaxVec xVec = scale (1 / norm_1 expVec) expVec
-    where
-        c       = maxElement xVec
-        cVec    = vector $ take (size xVec) [c,c..]
-        expVec  = cmap exp $ xVec - cVec
-        
+  where
+  c       = maxElement xVec
+  cVec    = vector $ take (size xVec) [c,c..]
+  expVec  = cmap exp $ xVec - cVec
+
 softmax :: Mat -> Mat
-softmax = fromRows . (map softmaxVec) . toRows
+softmax = fromRows . map softmaxVec . toRows
 \end{code}
 
 \subsubsection{Softmax with Loss}
 \begin{code}
-softmaxWithLoss :: Mat -> Mat -> R
-softmaxWithLoss x t = crossEntropyError (softmax x) t
+-- softmaxWithLoss :: Mat -> Mat -> R
+-- softmaxWithLoss x = crossEntropyError (softmax x)
 
 softmaxWithLossBackward :: Mat -> Mat -> Mat
-softmaxWithLossBackward y t = (y - t) / (scalar $ fromIntegral $ rows y)
+softmaxWithLossBackward y t = (y - t) / scalar (fromIntegral $ rows y)
 \end{code}
 
 \subsection{Loss Function}
@@ -781,20 +781,19 @@ softmaxWithLossBackward y t = (y - t) / (scalar $ fromIntegral $ rows y)
                           & =\mathrm{CEE}(\mathrm{softmax}(\hat{Y}),T)
 \end{align}
 \begin{code}
-loss :: Vec -> Mat -> Mat -> R
-loss w x t = softmaxWithLoss (forwardProp w x) t
+-- loss :: Vec -> Mat -> Mat -> R
+-- loss w x = softmaxWithLoss (forwardProp w x)
 \end{code}
 
 \subsection{Forward Propagetion}
 \begin{code}
--- 出力層の活性化関数(softmax)を適用する直前まで計算
 forwardProp :: Vec -> Mat -> Mat
 forwardProp weight x = affine w2 b2 $ relu $ affine w1 b1 x
-    where
-        w1 = reshape hiddenSize $ subVector w1_start w1_size weight :: Mat
-        w2 = reshape outputSize $ subVector w2_start w2_size weight :: Mat
-        b1 = subVector w1_size  hiddenSize weight
-        b2 = subVector b2_start outputSize weight
+  where
+  w1 = reshape hiddenSize $ subVector w1_start w1_size weight :: Mat
+  w2 = reshape outputSize $ subVector w2_start w2_size weight :: Mat
+  b1 = subVector w1_size  hiddenSize weight
+  b2 = subVector b2_start outputSize weight
 \end{code}
 
 \subsection{Prediction}
@@ -810,19 +809,19 @@ predictNN w x = fromList $ map maxIndex $ toRows $ forwardProp w x
   \frac{\partial f}{\partial x_i}\approx\frac{f(x_1,\dots,x_i+h,\dots,x_N)-f(x_1,\dots,x_i-h,\dots,x_N)}{2h}
 \end{equation}
 \begin{code}
-numericalGradientList :: Int -> (Vec -> R) -> Vec -> [R]
-numericalGradientList idx f x =
-    if idx == size x
-    then []
-    else
-    let h  = 1e-4
-        dx = cmap (* h) $ oneHotVector (size x) idx
-        x1 = x + dx
-        x2 = x - dx
-    in (f(x1) - f(x2)) / (2 * h) : numericalGradientList (idx + 1) f x
+-- numericalGradientList :: Int -> (Vec -> R) -> Vec -> [R]
+-- numericalGradientList idx f x =
+--   if idx == size x
+--   then []
+--   else
+--   let h  = 1e-4
+--       dx = cmap (* h) $ oneHotVector (size x) idx
+--       x1 = x + dx
+--       x2 = x - dx
+--   in (f x1 - f x2) / (2 * h) : numericalGradientList (idx + 1) f x
 
-numericalGradient :: (Vec -> R) -> Vec -> Vec
-numericalGradient f = vector . (numericalGradientList 0 f)
+-- numericalGradient :: (Vec -> R) -> Vec -> Vec
+-- numericalGradient f = vector . numericalGradientList 0 f
 \end{code}
 
 \subsubsection{Backward Propagation}
@@ -832,47 +831,46 @@ matToList = concat . toLists
 
 gradient :: Vec -> Mat -> Mat -> Vec
 gradient weight x t =
+  let w1 = reshape hiddenSize $ subVector w1_start w1_size weight :: Mat
+      w2 = reshape outputSize $ subVector w2_start w2_size weight :: Mat
+      b1 = subVector w1_size  hiddenSize weight
+      b2 = subVector b2_start outputSize weight
+      
+      -- forward propagation
+      a1 = affine w1 b1 x
+      y1 = relu a1
+      y2 = softmax $ affine w2 b2 y1
 
-    let w1 = reshape hiddenSize $ subVector w1_start w1_size weight :: Mat
-        w2 = reshape outputSize $ subVector w2_start w2_size weight :: Mat
-        b1 = subVector w1_size  hiddenSize weight
-        b2 = subVector b2_start outputSize weight
-        
-        -- forward propagation
-        a1 = affine w1 b1 x
-        y1 = relu a1
-        y2 = softmax $ affine w2 b2 y1
-        
-        -- backward propagation
-        da2 = softmaxWithLossBackward y2 t
-        dx2 = affineDX w2 da2
-        dw2 = affineDW y1 da2
-        da1 = reluBackward dx2 a1
-        dw1 = affineDW x da1
-    
-    in fromList $ dw1 ++ dw2
-  --
+      -- backward propagation
+      da2 = softmaxWithLossBackward y2 t
+      dx2 = affineDX w2 da2
+      dw2 = affineDW y1 da2
+      da1 = reluBackward dx2 a1
+      dw1 = affineDW x da1
+
+  in fromList $ dw1 ++ dw2
+--
 \end{code}
 
 \subsubsection{Check Backward Propagation}
 \begin{code}
-gradientCheck :: Vec -> Mat -> Mat -> R
-gradientCheck w x t =
-    let num_grad    = numericalGradient (\_w -> loss _w x t) w
-        grad        = gradient w x t
-        err_sum     = sum $ map abs $ toList $ num_grad - grad
-    in err_sum / (fromIntegral $ length $ toList grad)
+-- gradientCheck :: Vec -> Mat -> Mat -> R
+-- gradientCheck w x t =
+--   let num_grad    = numericalGradient (\_w -> loss _w x t) w
+--       grad        = gradient w x t
+--       err_sum     = sum $ map abs $ toList $ num_grad - grad
+--   in err_sum / fromIntegral (length $ toList grad)
 \end{code}
 
 \subsection{Learning}
 \begin{code}
 learn :: Vec -> Mat -> Mat -> R -> R -> Vec
 learn weight x t learningRate iterNum =
-    if iterNum == 0
-    then weight
-    else learn new_w x t learningRate (iterNum - 1)
-    where
-    new_w = weight - (cmap (* learningRate) $ gradient weight x t)
+  if iterNum == 0
+  then weight
+  else learn new_w x t learningRate (iterNum - 1)
+  where
+  new_w = weight - cmap (* learningRate) (gradient weight x t)
 \end{code}
 
 \chapter{Comparison of Models}
@@ -880,81 +878,81 @@ learn weight x t learningRate iterNum =
 \section{Classification}
 \begin{code}
 testAccuracy :: (Mat -> Vector Int) -> DataSet -> R
-testAccuracy predict testData = 1 - norm_2 d_y / (fromIntegral $ rows x)
-    where
-        x = fromRows $ map (vector . dFeature) testData :: Mat
-        y = fromList $ map dLabel testData :: Vector Int
-        y_pred = predict x :: Vector Int
-        r_y = fromList $ map fromIntegral $ toList $ y :: Vec
-        r_y_pred = fromList $ map fromIntegral $ toList $ y_pred :: Vec
-        d_y = r_y - r_y_pred
+testAccuracy predict testData = 1 - norm_2 d_y / fromIntegral (rows x)
+  where
+  x = fromRows $ map (vector . dFeature) testData :: Mat
+  y = fromList $ map dLabel testData :: Vector Int
+  y_pred = predict x :: Vector Int
+  r_y = fromList $ map fromIntegral $ toList y :: Vec
+  r_y_pred = fromList $ map fromIntegral $ toList  y_pred :: Vec
+  d_y = r_y - r_y_pred
 
 
 testCls :: IO()
 testCls = do
-    putStrLn "Classification (Accuracy)"
+  putStrLn "Classification (Accuracy)"
 
-    -- Data Processing
-    dataSet <- readClsDataFromCSV "app/data/iris/iris.data"
-    gen <- getStdGen
-    let splittedData = splitDataset dataSet 0.8 gen
-    let trainData = fst splittedData
-    let testData = snd splittedData
-    let x = fromRows $ map (vector . dFeature) trainData
-    let y = fromList $ map (fromIntegral . dLabel) trainData
+  -- Data Processing
+  dataSet <- readClsDataFromCSV "app/data/iris/iris.data"
+  gen <- getStdGen
+  let splittedData = splitDataset dataSet 0.8 gen
+  let trainData = fst splittedData
+  let testData = snd splittedData
+  let x = fromRows $ map (vector . dFeature) trainData
+  let y = fromList $ map (fromIntegral . dLabel) trainData
 
-    -- Logistic Regression
-    let wLogReg = sgd (vector $ take (cols x) [0,0..]) x y 0.01 1000
-    let accLogReg = testAccuracy (predictLogReg wLogReg) testData
+  -- Logistic Regression
+  let wLogReg = sgd (vector $ take (cols x) [0,0..]) x y 0.01 1000
+  let accLogReg = testAccuracy (predictLogReg wLogReg) testData
 
-    -- SVM
-    let wSVM = fitSVM x y 0.1 1000
-    let accSVM = testAccuracy (predictSVM wSVM) testData
-
-    -- Decision Tree
-    let tree = growTree trainData 0 10 "0"
-    let accDT = testAccuracy (predictDT tree) testData
-
-    -- Neural Network
-    let yOnehot = oneHotMat outputSize $ map dLabel trainData
-    let w0 = vector $ take weight_size [1,1..]
-    let w = learn w0 x yOnehot 0.1 1000
-    let accNN = testAccuracy (predictNN w) testData
-
-    putStrLn $ printf "Logistic Regression: %.3f" accLogReg
-    putStrLn $ printf "SVM                : %.3f" accSVM
-    putStrLn $ printf "Decision Tree      : %.3f" accDT
-    putStrLn $ printf "Neural Network     : %.3f" accNN
-    putStrLn ""
+  -- SVM
+  let wSVM = fitSVM x y 1000
+  let accSVM = testAccuracy (predictSVM wSVM) testData
+  
+  -- Decision Tree
+  let tree = growTree trainData 0 10 "0"
+  let accDT = testAccuracy (predictDT tree) testData
+  
+  -- Neural Network
+  let yOnehot = oneHotMat outputSize $ map dLabel trainData
+  let w0 = vector $ take weightSize [1,1..]
+  let w = learn w0 x yOnehot 0.1 1000
+  let accNN = testAccuracy (predictNN w) testData
+  
+  putStrLn $ printf "Logistic Regression: %.3f" accLogReg
+  putStrLn $ printf "SVM                : %.3f" accSVM
+  putStrLn $ printf "Decision Tree      : %.3f" accDT
+  putStrLn $ printf "Neural Network     : %.3f" accNN
+  putStrLn ""
 \end{code}
 
 \section{Regression}
 \begin{code}
 testMSE :: (Mat -> Vec) -> RegDataSet -> R
-testMSE predict testData = (d_y <.> d_y) / (fromIntegral $ rows x)
-    where
-        x = fromRows $ map (vector . rdFeature) testData
-        y = vector $ map rdLabel testData
-        d_y = y - (predict x)
+testMSE predict testData = (d_y <.> d_y) / fromIntegral (rows x)
+  where
+  x = fromRows $ map (vector . rdFeature) testData
+  y = vector $ map rdLabel testData
+  d_y = y - predict x
 
 testReg :: IO()
 testReg = do
-    putStrLn "Regression (MSE: Mean Squared Error)"
+  putStrLn "Regression (MSE: Mean Squared Error)"
 
-    -- Data Processing
-    dataSet <- readRegDataFromCSV "app/data/housing.csv"
-    gen <- getStdGen
-    let splittedData = splitDataset dataSet 0.8 gen
-    let trainData = fst splittedData
-    let testData = snd splittedData
-    let x = fromRows $ map (vector . rdFeature) trainData
-    let y = fromList $ map rdLabel trainData
+  -- Data Processing
+  dataSet <- readRegDataFromCSV "app/data/housing.csv"
+  gen <- getStdGen
+  let splittedData = splitDataset dataSet 0.8 gen
+  let trainData = fst splittedData
+  let testData = snd splittedData
+  let x = fromRows $ map (vector . rdFeature) trainData
+  let y = fromList $ map rdLabel trainData
 
-    -- Linear Regression
-    let w = fitLinReg x y 0.1
-    let mseLinReg = testMSE (predictLinRegMat w) testData
+  -- Linear Regression
+  let w = fitLinReg x y 0.1
+  let mseLinReg = testMSE (predictLinRegMat w) testData
 
-    putStrLn $ printf "Linear Regression  : %.3f" mseLinReg
+  putStrLn $ printf "Linear Regression  : %.3f" mseLinReg
 \end{code}
 
 \end{document}
