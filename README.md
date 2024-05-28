@@ -6,37 +6,27 @@ I write this book to learn Haskell and machine learning and hope that it will be
 The haskell-ml.pdf is generated from haskell-ml.lhs, written in [Literate Haskell](https://wiki.haskell.org/Literate_programming) format.
 You can compile it as both Haskell (.hs) and TeX (.tex) source code.
 
+### Prerequisites
+You need to have installed the following apps on your computer:
+- [Docker](https://www.docker.com/)
+- [Docker Compose](https://docs.docker.com/compose/) (Optional)
+
 ### Compile as Haskell code
-
-#### Requirements
-- [ghc](https://www.haskell.org/ghc/)
-- [hmatrix](https://hackage.haskell.org/package/hmatrix)
-- [MissingH](https://hackage.haskell.org/package/MissingH)
-```shell
-# Install ghc 
-$ sudo apt update && sudo apt install -y haskell-stack g++
-$ stack update && stack upgrade --binary-only && stack setup --install-ghc
+If you have Docker Compose installed on your computer, run:
+```sh
+docker compose run --rm hls cabal run
 ```
-```shell
-# Install hmatrix (Numeric.LinearAlgebra) and MissingH (Data.CSV)
-$ sudo apt update && sudo apt install -y liblapack-dev liblapack-doc
-$ stack update & stack install hmatrix MissingH
-```
-
-#### Compile and Run
-```shell
-$ ./build_app.sh
+Or if not, run:
+```sh
+docker run --rm -v ./:$PWD -w $PWD genjiohara/haskell-language-server cabal run
 ```
 
 ### Compile as TeX code
-#### Requirements
-- [TeX Live](https://www.tug.org/texlive/) (full version)
-```shell
-# Install TeX Live
-$ sudo apt update && sudo apt install -y texlive-full
+If you have Docker Compose installed on your computer, run:
+```sh
+docker compose run --rm texlab latexmk
 ```
-
-#### Compile
-```shell
-$ ./build_doc.sh
+Or if not, run:
+```sh
+docker run --rm -v ./:$PWD -w $PWD genjiohara/texlab latexmk
 ```
