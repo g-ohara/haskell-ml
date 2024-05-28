@@ -1,8 +1,0 @@
-services:
-  app:
-    image: genjiohara/make
-    container_name: DT-make
-    volumes:
-      - ./:/workspace
-    working_dir: /workspace
-    tty: true

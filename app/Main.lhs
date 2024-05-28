@@ -399,26 +399,26 @@ fitSVM x t c lambda = inv a #> (tr x #> t)
         a = tr x <> x + scale lambda (ident $ cols x)
 \end{code}
 
-\subsection{Kernel Trick}
-We can use the kernel trick to solve the problem in a high-dimensional space.
-\begin{equation}
-  \hat{y}=\operatorname{sign}\left(\sum_{i=1}^N\alpha_it_iK(\bm{x}_i,\bm{x})+w_0\right),
-\end{equation}
-where $K(\bm{x},\bm{x}')$ is kernel function.
-\begin{code}
-fitSVMKernel :: Mat -> Vec -> R -> R -> Vec
-fitSVMKernel x t c lambda = inv a #> t
-    where
-        a = tr k <> k + scale lambda (ident $ cols k)
-        k = kernel x
-\end{code}
-Kernel functions are as follows:
-\begin{itemize}
-  \item Linear kernel: $K(\bm{x},\bm{x}')=\bm{x}^T\bm{x}'$
-  \item Polynomial kernel: $K(\bm{x},\bm{x}')=(\bm{x}^T\bm{x}'+1)^d$
-  \item Gaussian kernel: $K(\bm{x},\bm{x}')=\exp\left(-\frac{\|\bm{x}-\bm{x}'\|^2}{2\sigma^2}\right)$
-\end{itemize}
-When we use Linear kernel, it is the equivalent to the original SVM.
+% \subsection{Kernel Trick}
+% We can use the kernel trick to solve the problem in a high-dimensional space.
+% \begin{equation}
+%   \hat{y}=\operatorname{sign}\left(\sum_{i=1}^N\alpha_it_iK(\bm{x}_i,\bm{x})+w_0\right),
+% \end{equation}
+% where $K(\bm{x},\bm{x}')$ is kernel function.
+% \begin{code}
+% fitSVMKernel :: Mat -> Vec -> R -> R -> Vec
+% fitSVMKernel x t c lambda = inv a #> t
+%     where
+%         a = tr k <> k + scale lambda (ident $ cols k)
+%         k = kernel x
+% \end{code}
+% Kernel functions are as follows:
+% \begin{itemize}
+%   \item Linear kernel: $K(\bm{x},\bm{x}')=\bm{x}^T\bm{x}'$
+%   \item Polynomial kernel: $K(\bm{x},\bm{x}')=(\bm{x}^T\bm{x}'+1)^d$
+%   \item Gaussian kernel: $K(\bm{x},\bm{x}')=\exp\left(-\frac{\|\bm{x}-\bm{x}'\|^2}{2\sigma^2}\right)$
+% \end{itemize}
+% When we use Linear kernel, it is the equivalent to the original SVM.
 
 \begin{code}
 polynomialKernel :: Int -> Vec -> Vec -> R
@@ -895,7 +895,7 @@ testCls = do
     putStrLn "Classification (Accuracy)"
 
     -- Data Processing
-    dataSet <- readClsDataFromCSV "data/iris/iris.data"
+    dataSet <- readClsDataFromCSV "app/data/iris/iris.data"
     gen <- getStdGen
     let splittedData = splitDataset dataSet 0.8 gen
     let trainData = fst splittedData
@@ -942,7 +942,7 @@ testReg = do
     putStrLn "Regression (MSE: Mean Squared Error)"
 
     -- Data Processing
-    dataSet <- readRegDataFromCSV "data/housing.csv"
+    dataSet <- readRegDataFromCSV "app/data/housing.csv"
     gen <- getStdGen
     let splittedData = splitDataset dataSet 0.8 gen
     let trainData = fst splittedData
