@@ -20,7 +20,7 @@ jobs:
       - name: Prepare deployment files
         run: |
           mkdir -p public
-          mv main.pdf public/
+          mv Main.pdf public/
           cat <<EOF > public/index.html
           <!DOCTYPE html>
           <html>
@@ -34,11 +34,11 @@ jobs:
               </style>
             </head>
             <body>
-              <object data="main.pdf" type="application/pdf" width="100%" height="100%">
-                <iframe src="main.pdf" width="100%" height="100%">
+              <object data="Main.pdf" type="application/pdf" width="100%" height="100%">
+                <iframe src="Main.pdf" width="100%" height="100%">
                   This browser does not support PDFs.
                   Please download the PDF to view it: 
-                  <a href="main.pdf">Download PDF</a>
+                  <a href="Main.pdf">Download PDF</a>
                 </iframe>
               </object>
             </body>
