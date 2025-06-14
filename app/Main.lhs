@@ -56,7 +56,6 @@ We use the following libraries:
 \begin{itemize}
   \item \texttt{Prelude} for basic functions
   \item \texttt{Data.CSV} and \texttt{Text.ParserCombinators.Parsec} for reading CSV files
-  \item \texttt{Data.List} for list operations
   \item \texttt{Numeric.LinearAlgebra} for matrix operations
   \item \texttt{System.Random} and \texttt{List.Shuffle} for randomization
   \item \texttt{Text.Printf} for formatted output
@@ -65,7 +64,6 @@ We use the following libraries:
 import Prelude hiding ((<>))
 import Data.CSV
 import Text.ParserCombinators.Parsec
-import Data.List
 import Numeric.LinearAlgebra
 import System.Random
 import List.Shuffle
@@ -151,23 +149,25 @@ We need following steps to process data:
 processClsData :: [[String]] -> [DataPoint]
 processClsData rawData = concatClsDataPoint feats labs
   where
-    rawLabs = (last . transpose) rawData
-    feats   = map (map (read :: String -> Double) . init) rawData
-    labs    = strLabelToIntLabel rawLabs
+    feats = map (map (read :: String -> Double) . init) rawData
+    labs  = strLabelToIntLabel $ map last rawData
 
 processRegData :: [[String]] -> [RegDataPoint]
 processRegData rawData = concatRegDataPoint feats labs
   where
-    rawLabs = (last . transpose) rawData
-    feats   = map (map (read :: String -> R) . init) rawData
-    labs    = map (read :: String -> R) rawLabs
+    feats = map (map (read :: String -> R) . init) rawData
+    labs  = map (read :: String -> R) $ map last rawData
 
 strLabelToIntLabel :: [String] -> [Int]
-strLabelToIntLabel strLabels = map (maybeToInt . labelToIndex) strLabels
+strLabelToIntLabel strLabels = map (flip elemIndex labelSet) strLabels
   where
-    labelToIndex l = elemIndex l $ nub strLabels
-    maybeToInt Nothing = 0
-    maybeToInt (Just a) = a
+    labelSet = foldl (\xs x -> if x `elem` xs then xs else (x:xs)) [] strLabels
+    elemIndex t xs = elemIndex' t xs 0
+      where
+        elemIndex' _ [] i = i
+        elemIndex' t' (x':xs') i
+          | t' == x'  = i
+          | otherwise = elemIndex' t' xs' (i + 1)
 
 concatClsDataPoint :: [[Double]] -> [Int] -> [DataPoint]
 concatClsDataPoint (f:fs) (l:ls) = DataPoint f l : concatClsDataPoint fs ls
