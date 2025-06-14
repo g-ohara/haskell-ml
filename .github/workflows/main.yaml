@@ -25,7 +25,7 @@ jobs:
           <!DOCTYPE html>
           <html>
             <head>
-              <title>圏論ノート</title>
+              <title>Haskell ML</title>
               <style>
                 object,iframe {
                   width: 100vw;
